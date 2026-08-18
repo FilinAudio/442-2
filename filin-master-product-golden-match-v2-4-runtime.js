@@ -16,7 +16,7 @@
    - Native Promotions / bottom horizontal scroller
 */
 (function () {
-  'use strict';
+  'use strict'; 
 
   if (window.__FILIN_MASTER_GOLDEN_MATCH_V24__) return;
   window.__FILIN_MASTER_GOLDEN_MATCH_V24__ = true;
