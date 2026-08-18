@@ -3,7 +3,7 @@
    Source slug: filin_audio_quadron
 */
 (function() {
-  'use strict';
+  'use strict'; 
 
   if (window.__FILIN_MASTER_FULL_PROFILE_V2__) return;
   window.__FILIN_MASTER_FULL_PROFILE_V2__ = true;
