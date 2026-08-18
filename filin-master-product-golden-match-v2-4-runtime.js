@@ -16,7 +16,7 @@
    - Native Promotions / bottom horizontal scroller
 */
 (function () {
-  'use strict';
+  'use strict'; 
 
   if (window.__FILIN_MASTER_GOLDEN_MATCH_V24__) return;
   window.__FILIN_MASTER_GOLDEN_MATCH_V24__ = true;
@@ -385,14 +385,16 @@
            REAL PRODUCT TABS — stacked native buttons.
            No generated + circles. Full Profile keeps the click logic.
            ===================================================== */
-        .js-product .tabs-wrapper {
-          width:calc(100% + 32px) !important;
-          margin-left:-16px !important;
-          padding:0 !important;
-          overflow:visible !important;
-          background:#fffbf7 !important;
-        }
-
+.js-product .tabs-wrapper {
+  width:100% !important;
+  max-width:100% !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+  padding:0 !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  background:#fffbf7 !important;
+}
         .js-product .tabs-header {
           display:grid !important;
           grid-template-columns:1fr !important;
@@ -897,44 +899,172 @@
     return buttons.length;
   }
 
-  function hideLegacyGrandTower() {
-    var root = activeRoot();
-    var hidden = 0;
+function hideLegacyGrandTower() {
+  var root = activeRoot();
+  var hidden = 0;
 
-    var markers = [
-      /Audioinstrument Grand Tower/i,
-      /Advanced Crossover Engineering/i,
-      /P\.Audio titanium/i,
-      /Sonido 15/i,
-      /Sonido 8/i,
-      /massive 100 kg/i,
-      /three-way floorstanding/i
-    ];
+  var markers = [
+    /Audioinstrument Grand Tower/i,
+    /Advanced Crossover Engineering/i,
+    /P\.Audio titanium/i,
+    /15["”]\s*Sonido/i,
+    /8["”]\s*Sonido/i,
+    /Sonido 15/i,
+    /Sonido 8/i,
+    /massive 100 kg/i,
+    /three-way floorstanding/i
+  ];
 
-    Array.prototype.slice.call(document.querySelectorAll('.t-rec,.t123')).forEach(function (record) {
-      if (root && record.contains(root)) return;
-      if (record.id === 'product-promotions' || record.querySelector('#product-promotions')) return;
+  /*
+   * Find the REAL Quadron tab set.
+   * The Quadron profile has product-specific configuration tabs
+   * which the old Grand Tower template does not have.
+   */
+  var wrappers = Array.prototype.slice.call(
+    document.querySelectorAll('.tabs-wrapper')
+  );
 
-      var t = norm(record.textContent);
-      if (!t || t.length > 25000) return;
-      if (!markers.some(function (rx) { return rx.test(t); })) return;
+  var canonical = wrappers.find(function (wrapper) {
+    if (!root || !root.contains(wrapper)) return false;
 
-      record.setAttribute('data-fp-v24-legacy-hidden','1');
-      hidden++;
-    });
+    var text = norm(
+      Array.prototype.slice.call(
+        wrapper.querySelectorAll('.tab-btn')
+      ).map(function (button) {
+        return button.textContent || '';
+      }).join(' ')
+    );
 
-    Array.prototype.slice.call(document.querySelectorAll('.js-product')).forEach(function (candidate) {
-      if (candidate === root) return;
+    return (
+      /TUNING\s*&\s*CUSTOMIZATION/i.test(text) &&
+      /COMPONENT UPGRADES/i.test(text) &&
+      /CABLE OUTPUT PLUG/i.test(text) &&
+      /CABLE LENGTH/i.test(text)
+    );
+  }) || null;
 
-      var t = norm(candidate.textContent);
-      if (!markers.some(function (rx) { return rx.test(t); })) return;
-
-      candidate.setAttribute('data-fp-v24-legacy-hidden','1');
-      hidden++;
-    });
-
-    return hidden;
+  if (canonical) {
+    canonical.setAttribute(
+      'data-fp-v24-canonical',
+      '1'
+    );
   }
+
+  /*
+   * IMPORTANT:
+   * Legacy commerce can live inside the SAME .js-product /
+   * Tilda record as the real Quadron profile.
+   *
+   * Therefore inspect every tabs-wrapper directly instead of
+   * skipping the whole record containing the active root.
+   */
+  wrappers.forEach(function (wrapper) {
+    if (wrapper === canonical) return;
+
+    var t = norm(wrapper.textContent);
+
+    if (
+      !markers.some(function (rx) {
+        return rx.test(t);
+      })
+    ) {
+      return;
+    }
+
+    if (
+      wrapper.getAttribute(
+        'data-fp-v24-legacy-hidden'
+      ) !== '1'
+    ) {
+      wrapper.setAttribute(
+        'data-fp-v24-legacy-hidden',
+        '1'
+      );
+
+      hidden++;
+    }
+  });
+
+  /*
+   * Also remove separate old Tilda records,
+   * but never remove the record containing the real Quadron root.
+   */
+  Array.prototype.slice.call(
+    document.querySelectorAll('.t-rec,.t123')
+  ).forEach(function (record) {
+
+    if (
+      record.id === 'product-promotions' ||
+      record.querySelector('#product-promotions')
+    ) {
+      return;
+    }
+
+    if (root && record.contains(root)) {
+      return;
+    }
+
+    var t = norm(record.textContent);
+
+    if (!t || t.length > 25000) return;
+
+    if (
+      !markers.some(function (rx) {
+        return rx.test(t);
+      })
+    ) {
+      return;
+    }
+
+    if (
+      record.getAttribute(
+        'data-fp-v24-legacy-hidden'
+      ) !== '1'
+    ) {
+      record.setAttribute(
+        'data-fp-v24-legacy-hidden',
+        '1'
+      );
+
+      hidden++;
+    }
+  });
+
+  /*
+   * Catch a completely separate legacy .js-product too.
+   */
+  Array.prototype.slice.call(
+    document.querySelectorAll('.js-product')
+  ).forEach(function (candidate) {
+
+    if (candidate === root) return;
+
+    var t = norm(candidate.textContent);
+
+    if (
+      !markers.some(function (rx) {
+        return rx.test(t);
+      })
+    ) {
+      return;
+    }
+
+    if (
+      candidate.getAttribute(
+        'data-fp-v24-legacy-hidden'
+      ) !== '1'
+    ) {
+      candidate.setAttribute(
+        'data-fp-v24-legacy-hidden',
+        '1'
+      );
+
+      hidden++;
+    }
+  });
+
+  return hidden;
+}
 
   function apply() {
     if (!isTarget()) return;
