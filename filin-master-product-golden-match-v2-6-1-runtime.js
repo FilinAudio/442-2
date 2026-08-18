@@ -4047,23 +4047,23 @@ setTimeout(function(){
         /* HERO */
         .fp-v24-hero-cover {
           position:relative !important;
-          height:480px !important;
-          min-height:480px !important;
-          max-height:480px !important;
+          height:620px !important;
+          min-height:620px !important;
+          max-height:620px !important;
           overflow:hidden !important;
         }
 
         .fp-v24-hero-record {
-          min-height:480px !important;
+          min-height:620px !important;
           margin-bottom:12px !important;
         }
 
         .fp-v24-hero-cover .t-cover__carrier,
         .fp-v24-hero-cover .t-cover__filter,
         .fp-v24-hero-cover .t-cover__wrapper {
-          height:480px !important;
-          min-height:480px !important;
-          max-height:480px !important;
+          height:620px !important;
+          min-height:620px !important;
+          max-height:620px !important;
         }
 
         .fp-v24-hero-cover .t-cover__carrier {
@@ -4083,8 +4083,8 @@ setTimeout(function(){
           inset:0 !important;
           z-index:9999 !important;
           width:100% !important;
-          height:480px !important;
-          padding:24px 18px 26px !important;
+          height:620px !important;
+          padding:28px 18px 28px !important;
           box-sizing:border-box !important;
           display:flex !important;
           flex-direction:column !important;
@@ -4098,7 +4098,7 @@ setTimeout(function(){
         #fp-v26-hero-back {
           display:block !important;
           position:absolute !important;
-          top:70px !important;
+          top:96px !important;
           left:0 !important;
           right:0 !important;
           z-index:10001 !important;
@@ -4125,7 +4125,7 @@ setTimeout(function(){
         #fp-v26-hero-h1 {
           width:100% !important;
           max-width:390px !important;
-          margin:86px auto 0 !important;
+          margin:190px auto 0 !important;
           padding:0 !important;
           color:#fff !important;
           font-family:'Montserrat',Arial,sans-serif !important;
@@ -4140,7 +4140,7 @@ setTimeout(function(){
         #fp-v26-hero-subtitle {
           width:100% !important;
           max-width:365px !important;
-          margin:auto auto 0 !important;
+          margin:auto auto 10px !important;
           padding:0 !important;
           color:#fff !important;
           font-family:'Montserrat',Arial,sans-serif !important;
@@ -5284,6 +5284,384 @@ setTimeout(function(){
 
   window.FilinMasterGoldenMatchV261Desktop = Object.freeze({
     version:'2.6.1',
+    apply:apply
+  });
+})();
+
+/* ========================================================================
+   FILIN LABS — GOLDEN MATCH V2.6.2 DESKTOP INTERACTION FIX
+   - adds two visual spaces between BUY NOW and price on desktop
+   - makes Perfect Matches a real desktop accordion button, matching mobile
+   - isolates Reviews so #reviews is visible ONLY when Reviews tab is active
+   - leaves approved mobile behavior untouched
+   ======================================================================== */
+(function () {
+  'use strict';
+
+  if (window.__FILIN_MASTER_GOLDEN_MATCH_V262_DESKTOP__) return;
+  window.__FILIN_MASTER_GOLDEN_MATCH_V262_DESKTOP__ = true;
+
+  var MAX = 820;
+  var STYLE_ID = 'filin-master-golden-match-v262-desktop';
+
+  function norm(value) {
+    return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+  }
+
+  function productRoot() {
+    return document.querySelector('.js-product[data-fp-full-profile="filin_audio_quadron"]') ||
+      Array.prototype.slice.call(document.querySelectorAll('.js-product')).find(function (el) {
+        return /Quadron/i.test(norm(el.textContent));
+      }) || null;
+  }
+
+  function installStyles() {
+    var old = document.getElementById(STYLE_ID);
+    if (old) old.remove();
+
+    var style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = `
+      @media (min-width:${MAX + 1}px) {
+        /* =====================================================
+           BUY NOW — exactly two visual spaces before price.
+           Price remains dynamic; no hard-coded dollar amount.
+           ===================================================== */
+        .js-product .buy-btn.fl-v24-main-buy .fl-v24-price-in-buy,
+        .js-product .buy-btn .fl-v24-price-in-buy {
+          display:inline-block !important;
+          white-space:nowrap !important;
+        }
+
+        .js-product .buy-btn.fl-v24-main-buy .fl-v24-price-in-buy::before,
+        .js-product .buy-btn .fl-v24-price-in-buy::before {
+          content:"\\00a0\\00a0" !important;
+          white-space:pre !important;
+        }
+
+        /* =====================================================
+           PERFECT MATCHES — desktop uses the same accordion
+           concept as mobile: one compact button when closed.
+           ===================================================== */
+        .js-product .perfect-matches-block.fp-pm-v5 {
+          width:calc(100% - 32px) !important;
+          margin:28px 16px 34px !important;
+          padding:0 !important;
+          box-sizing:border-box !important;
+          border:2px solid #111 !important;
+          border-radius:14px !important;
+          background:#fffaf5 !important;
+          overflow:hidden !important;
+          box-shadow:none !important;
+          text-align:left !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5 > .pm-title {
+          display:none !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5 > .fp-pm-v5-toggle {
+          display:grid !important;
+          grid-template-columns:minmax(0,1fr) 42px !important;
+          gap:14px !important;
+          align-items:center !important;
+          width:100% !important;
+          min-width:0 !important;
+          min-height:82px !important;
+          margin:0 !important;
+          padding:16px 18px !important;
+          box-sizing:border-box !important;
+          border:0 !important;
+          border-radius:0 !important;
+          background:linear-gradient(135deg,#fffbf7 0%,#f8f2ec 100%) !important;
+          color:#302923 !important;
+          font-family:'Montserrat',Arial,sans-serif !important;
+          text-align:left !important;
+          cursor:pointer !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5 .fp-pm-v5-toggle-copy {
+          min-width:0 !important;
+          display:block !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5 .fp-pm-v5-toggle-eyebrow {
+          display:block !important;
+          margin:0 0 6px !important;
+          color:#a97a45 !important;
+          font-size:13px !important;
+          line-height:1.15 !important;
+          font-weight:800 !important;
+          letter-spacing:.075em !important;
+          text-transform:uppercase !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5 .fp-pm-v5-toggle-note {
+          display:block !important;
+          max-width:none !important;
+          color:#5f5851 !important;
+          font-size:12px !important;
+          line-height:1.4 !important;
+          font-weight:500 !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5 .fp-pm-v5-toggle-note strong {
+          color:#28231f !important;
+          font-weight:800 !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5 .fp-pm-v5-toggle-control {
+          display:flex !important;
+          align-items:center !important;
+          justify-content:center !important;
+          justify-self:end !important;
+          width:38px !important;
+          height:38px !important;
+          min-width:38px !important;
+          min-height:38px !important;
+          margin:0 !important;
+          padding:0 !important;
+          box-sizing:border-box !important;
+          border:1px solid rgba(170,124,72,.42) !important;
+          border-radius:50% !important;
+          background:#fff !important;
+          color:#9f7445 !important;
+          opacity:1 !important;
+          visibility:visible !important;
+          box-shadow:0 3px 10px rgba(100,68,35,.08) !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5 .fp-pm-v5-toggle-control svg {
+          display:block !important;
+          width:17px !important;
+          height:17px !important;
+          transition:transform .22s ease !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5.fp-pm-open .fp-pm-v5-toggle-control {
+          background:#b98b55 !important;
+          border-color:#b98b55 !important;
+          color:#fff !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5.fp-pm-open .fp-pm-v5-toggle-control svg {
+          transform:rotate(180deg) !important;
+        }
+
+        /* Closed = button only. */
+        .js-product .perfect-matches-block.fp-pm-v5:not(.fp-pm-open) > .pm-desc,
+        .js-product .perfect-matches-block.fp-pm-v5:not(.fp-pm-open) > .pm-formula,
+        .js-product .perfect-matches-block.fp-pm-v5:not(.fp-pm-open) > .pm-discount {
+          display:none !important;
+        }
+
+        /* Open = keep the long explanatory sentence on ONE line. */
+        .js-product .perfect-matches-block.fp-pm-v5.fp-pm-open > .pm-desc {
+          display:block !important;
+          width:100% !important;
+          max-width:none !important;
+          margin:18px auto 12px !important;
+          padding:0 18px !important;
+          box-sizing:border-box !important;
+          color:#666 !important;
+          font-family:'Montserrat',Arial,sans-serif !important;
+          font-size:clamp(11px,.78vw,13px) !important;
+          line-height:1.35 !important;
+          font-weight:400 !important;
+          text-align:center !important;
+          white-space:nowrap !important;
+          overflow:visible !important;
+          text-overflow:clip !important;
+        }
+
+        .js-product .perfect-matches-block.fp-pm-v5.fp-pm-open > .pm-formula {
+          display:flex !important;
+        }
+
+        /* Same as mobile: the compact header already carries this message. */
+        .js-product .perfect-matches-block.fp-pm-v5 > .pm-discount {
+          display:none !important;
+        }
+
+        /* =====================================================
+           REVIEWS — hard isolation.
+           Even if the reviews engine tries to reveal itself,
+           it stays hidden unless Reviews is the active tab.
+           ===================================================== */
+        .js-product .tabs-wrapper > #reviews.tab-content:not(.fp-v262-review-active) {
+          display:none !important;
+        }
+
+        .js-product .tabs-wrapper > #reviews.tab-content.fp-v262-review-active {
+          display:block !important;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function targetId(button) {
+    if (!button) return '';
+
+    var id = button.dataset.fpTarget || '';
+    if (id) return id;
+
+    var inline = button.getAttribute('onclick') || '';
+    var match = inline.match(/showTab\s*\(\s*event\s*,\s*(['"])(.*?)\1\s*\)/i);
+    if (match) {
+      id = match[2];
+      button.dataset.fpTarget = id;
+      return id;
+    }
+
+    if (/^Reviews\b/i.test(norm(button.textContent))) {
+      button.dataset.fpTarget = 'reviews';
+      return 'reviews';
+    }
+
+    return '';
+  }
+
+  function showDesktopPanel(wrapper, header, button) {
+    if (!wrapper || !header || !button || window.innerWidth <= MAX) return;
+
+    var id = targetId(button);
+    var panels = Array.prototype.slice.call(wrapper.querySelectorAll(':scope > .tab-content'));
+    var buttons = Array.prototype.slice.call(header.querySelectorAll(':scope > .tab-btn'));
+
+    buttons.forEach(function (btn) {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-selected','false');
+    });
+
+    panels.forEach(function (panel) {
+      panel.classList.remove('fp-v262-review-active');
+      panel.style.setProperty('display','none','important');
+    });
+
+    var panel = panels.find(function (node) {
+      return node.id === id;
+    });
+
+    if (!panel && button === buttons[0]) panel = panels[0] || null;
+    if (!panel) return;
+
+    button.classList.add('active');
+    button.setAttribute('aria-selected','true');
+
+    if (id === 'reviews' || panel.id === 'reviews') {
+      panel.classList.add('fp-v262-review-active');
+    }
+
+    panel.style.setProperty('display','block','important');
+  }
+
+  function bindDesktopTabs() {
+    var root = productRoot();
+    if (!root) return 0;
+
+    var wrapper = root.querySelector('.tabs-wrapper[data-fp-v24-canonical="1"]') ||
+      root.querySelector('.tabs-wrapper');
+    var header = wrapper && wrapper.querySelector(':scope > .tabs-header,.tabs-header');
+    if (!wrapper || !header) return 0;
+
+    var buttons = Array.prototype.slice.call(header.querySelectorAll(':scope > .tab-btn'));
+    if (!buttons.length) return 0;
+
+    buttons.forEach(function (button) {
+      targetId(button);
+
+      if (button.dataset.fpV262DesktopBound === '1') return;
+      button.dataset.fpV262DesktopBound = '1';
+
+      button.addEventListener('click', function (event) {
+        if (window.innerWidth <= MAX) return;
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        showDesktopPanel(wrapper,header,button);
+      }, true);
+    });
+
+    /* Clean the accidental initial state where Reviews leaks under every tab.
+       Do this only once; later retries must respect a real user click on Reviews. */
+    if (window.innerWidth > MAX && wrapper.dataset.fpV262DesktopInitialized !== '1') {
+      wrapper.dataset.fpV262DesktopInitialized = '1';
+
+      var active = buttons.find(function (button) {
+        return button.classList.contains('active');
+      });
+
+      var reviewsButton = buttons.find(function (button) {
+        return targetId(button) === 'reviews';
+      });
+
+      if (!active || active === reviewsButton) {
+        active = buttons.find(function (button) {
+          return targetId(button) !== 'reviews';
+        }) || buttons[0];
+      }
+
+      showDesktopPanel(wrapper,header,active);
+    }
+
+    return buttons.length;
+  }
+
+  function closePerfectMatchesDesktop() {
+    if (window.innerWidth <= MAX) return false;
+    var root = productRoot();
+    var block = root && root.querySelector('.perfect-matches-block.fp-pm-v5');
+    if (!block) return false;
+
+    /* Only force the initial desktop state once. User clicks remain respected. */
+    if (block.dataset.fpV262DesktopInitial !== '1') {
+      block.dataset.fpV262DesktopInitial = '1';
+      block.classList.remove('fp-pm-open');
+      var toggle = block.querySelector('.fp-pm-v5-toggle');
+      if (toggle) toggle.setAttribute('aria-expanded','false');
+    }
+    return true;
+  }
+
+  function apply() {
+    installStyles();
+    var tabs = bindDesktopTabs();
+    var pm = closePerfectMatchesDesktop();
+
+    document.documentElement.setAttribute('data-fp-golden-desktop','v2.6.2');
+
+    console.info('[Master Product V2] GOLDEN MATCH V2.6.2 DESKTOP APPLIED', {
+      tabs:tabs,
+      perfectMatchesButton:pm,
+      reviewsIsolated:!!document.querySelector('.js-product .tabs-wrapper > #reviews.tab-content')
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(apply,140);
+    }, {once:true});
+  } else {
+    setTimeout(apply,140);
+  }
+
+  [900,1800,3200,5000].forEach(function (delay) {
+    setTimeout(apply,delay);
+  });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      installStyles();
+      bindDesktopTabs();
+    },180);
+  }, {passive:true});
+
+  window.FilinMasterGoldenMatchV262Desktop = Object.freeze({
+    version:'2.6.2',
     apply:apply
   });
 })();
