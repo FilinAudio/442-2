@@ -2,13 +2,13 @@
 (function(){
 'use strict';
 if(window.__FILIN_GR2_BATCH_V1__)return;
-var V='1.0.0',R='filin-master-product-v3',P=(location.pathname||'/').replace(/^\/+|\/+$/g,'');
+var V='1.0.1',R='filin-master-product-v3',P=(location.pathname||'/').replace(/^\/+|\/+$/g,'');
 var A=['perun_dark_sound','volga_tone_priboi_1','orvellium_nocturne_aura','flatvox_gbc_dj_hulk','snorry_si_5_mk_2_headphones','snorry_joule_headphones','perun_modern','snorry_si_6_headphones','flatvox_gbc','flatvox_kona','phenomenon_spatium','filin_audio_model_1_standard_v2','filin_audio_model_1_premium_v2','perun_modern_closed','phenomenon_libratum','snorry_nm_2_headphones','filin_audio_limited','filin_audio_quadron','snorry_trion_mk_3'];
 if(A.indexOf(P)<0)return;window.__FILIN_GR2_BATCH_V1__=true;
 var CDN='https://cdn.jsdelivr.net/gh/FilinAudio/442-2@',D={rich:CDN+'f78a192778064f62e6c6bf45d5c338d9826d185d/filin-rich-product-catalog-v2-runtime.js',core:CDN+'e4de1ae708daa2966411d764f3d803af5b59ec17/filin-master-product-v3-3-2-golden-standard-runtime.js',reg:CDN+'20681020ae3ddbacd0a467f84e0b5ea831135706/filin-master-product-v3-profiles-registry-v1.js',commerce:CDN+'44c895edcbef44d44014e494781c0046bd969b67/filin-master-product-v3-clean-commerce-v2.js',wish:CDN+'3d06611f1c1daff094db45a7659a13a6f3d31d88/filin-master-product-v3-wishlist-bridge-v4.js'};
 var S={version:V,slug:P,ready:false,rich:false,core:false,registry:false,commerce:false,wishlist:false,images:0,tabs:0,pm:false,price:0,title:'',errors:[]};
 function pub(){window.__FILIN_GR2_BATCH_V1_STATE__=JSON.parse(JSON.stringify(S));}
-function st(v){return String(v==null?'':v).trim()}function tx(e){return st(e&&e.textContent).replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim()}function ar(v){return Array.prototype.slice.call(v||[])}function es(v){return st(v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]})}
+function st(v){return String(v==null?'':v).trim()}function tx(e){return st(e&&e.textContent).replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim()}function ar(v){return Array.prototype.slice.call(v||[])}function es(v){return st(v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function err(x,e){S.errors.push(x+': '+String(e&&e.message||e));console.warn('[GR2 Batch V1]',x,e||'');pub()}
 (function(){var s=document.createElement('style');s.textContent='html:not(.fp-v7-ready) .t-cover{visibility:hidden!important}';(document.head||document.documentElement).appendChild(s);document.documentElement.classList.remove('fp-v7-ready');setTimeout(function(){document.documentElement.classList.add('fp-v7-ready')},6500)})();
 function loaded(src){var f=src.split('/').pop();return ar(document.scripts).some(function(x){return st(x.src).indexOf(f)>=0})}
