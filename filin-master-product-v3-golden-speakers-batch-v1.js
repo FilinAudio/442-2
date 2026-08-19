@@ -6,6 +6,7 @@
    - derives product from pathname
    - normalizes/injects #product-data
    - loads pinned Rich Catalog
+   - waits for the legacy page DOM so product-specific content can be captured
    - loads frozen Golden V3.3.2 core
    - loads Generic Profile Bridge V4
    - leaves every other site page untouched
@@ -43,7 +44,7 @@
   if(!meta) return;
   window.__FILIN_GOLDEN_SPEAKERS_BATCH_V1__=true;
 
-  var VERSION='1.0.0';
+  var VERSION='1.0.1';
   var RICH='https://cdn.jsdelivr.net/gh/FilinAudio/442-2@ad33e4a4c7a11c65a7969cdf5e3b3655bfaa7327/filin-rich-product-catalog-v2-runtime.js';
   var CORE='https://cdn.jsdelivr.net/gh/FilinAudio/442-2@e4de1ae708daa2966411d764f3d803af5b59ec17/filin-master-product-v3-3-2-golden-standard-runtime.js';
   var BRIDGE='https://cdn.jsdelivr.net/gh/FilinAudio/442-2@6eb7d874ef424192f14f8643251a5aaecf5bd785/filin-master-product-v3-generic-profile-bridge-v4.js';
@@ -54,8 +55,7 @@
   style.textContent='html:not(.fp-v7-ready) .t-cover{visibility:hidden!important;}';
   (document.head||document.documentElement).appendChild(style);
 
-  // Prevent the old standalone Registry V1 from re-owning these pages.
-  // Golden V3 core profiles remain available; Generic V4 owns missing profiles.
+  // Prevent an old standalone Registry V1 from re-owning these pages.
   window.__FILIN_MASTER_PRODUCT_V3_PROFILES_REGISTRY_V1__=true;
 
   function seed(){
@@ -104,28 +104,40 @@
     console.info('[Golden Speakers Batch] READY',{version:VERSION,slug:slug,reason:reason});
   }
 
-  seed();
-  console.info('[Golden Speakers Batch] START',{version:VERSION,slug:slug,path:path});
-
-  load(RICH,'filin-golden-speakers-rich',function(){
-    load(CORE,'filin-golden-speakers-core',function(){
-      load(BRIDGE,'filin-golden-speakers-generic-v4',function(){
-        var n=0;
-        var timer=setInterval(function(){
-          n++;
-          var api=window.FilinMasterProductV3;
-          var root=document.getElementById('filin-master-product-v3');
-          if(api&&api.profiles&&api.profiles[slug]&&root){
-            clearInterval(timer);ready('golden-applied');
-          }else if(n>=140){
-            clearInterval(timer);ready('apply-timeout');
-          }
-        },50);
+  function startGolden(){
+    seed();
+    console.info('[Golden Speakers Batch] START',{version:VERSION,slug:slug,path:path,readyState:document.readyState});
+    load(RICH,'filin-golden-speakers-rich',function(){
+      load(CORE,'filin-golden-speakers-core',function(){
+        load(BRIDGE,'filin-golden-speakers-generic-v4',function(){
+          var n=0;
+          var timer=setInterval(function(){
+            n++;
+            var api=window.FilinMasterProductV3;
+            var root=document.getElementById('filin-master-product-v3');
+            if(api&&api.profiles&&api.profiles[slug]&&root){
+              clearInterval(timer);ready('golden-applied');
+            }else if(n>=140){
+              clearInterval(timer);ready('apply-timeout');
+            }
+          },50);
+        });
       });
     });
-  });
+  }
+
+  // Seed early so any compatibility code sees the correct identity.
+  seed();
+
+  // But wait for the page body before Golden V4 captures legacy
+  // purchase / Perfect Matches / tabs / current product images.
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',startGolden,{once:true});
+  }else{
+    setTimeout(startGolden,0);
+  }
 
   setTimeout(function(){
     if(!document.documentElement.classList.contains('fp-v7-ready'))ready('global-fail-open');
-  },7000);
+  },8000);
 })();
