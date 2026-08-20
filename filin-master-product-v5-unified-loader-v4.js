@@ -1,0 +1,154 @@
+/* FILIN LABS — MASTER PRODUCT V5 UNIFIED LOADER V4
+   One entrypoint for approved Golden product pages:
+   - 19 Golden Reference 2 pages / headphones
+   - 6 approved speaker pages
+   - 10 tube-amplifier pages
+
+   V5.4 fixes:
+   - correct jsDelivr commit for AMP Batch V4.3
+   - preserves single-pipeline routing and pre-paint curtain
+*/
+(function(){
+'use strict';
+if(window.__FILIN_MASTER_PRODUCT_V5_UNIFIED_LOADER_V4__)return;
+
+var VERSION='5.4.0';
+var PATH=(location.pathname||'/').replace(/^\/+|\/+$/g,'');
+var ROOT='filin-master-product-v3';
+
+var GR2=[
+'perun_dark_sound','volga_tone_priboi_1','orvellium_nocturne_aura','flatvox_gbc_dj_hulk',
+'snorry_si_5_mk_2_headphones','snorry_joule_headphones','perun_modern','snorry_si_6_headphones',
+'flatvox_gbc','flatvox_kona','phenomenon_spatium','filin_audio_model_1_standard_v2',
+'filin_audio_model_1_premium_v2','perun_modern_closed','phenomenon_libratum','snorry_nm_2_headphones',
+'filin_audio_limited','filin_audio_quadron','snorry_trion_mk_3'
+];
+
+var SPEAKERS=[
+'demograf_clio_speakers',
+'perun_junior_hybrid_electrostatic_speakers',
+'perun_elder_electrostatic_speakers',
+'audioinstrument_tower_speakers',
+'audioinstrument_power_speakers',
+'audioinstrument_grand_tower_speakers'
+];
+
+var AMPS=[
+'gerbera_lira_compact_tube_amplifier_ultralinear_se',
+'gerbera_2a3_tube_amplifier',
+'audioinstrument_sirius_kt150_tube_amplifier',
+'audioinstrument_sirius_kt66_push_pull_tube_amplifier',
+'demograf_ajax_tube_amplifier_el_84',
+'gerbera_ha_45_tube_headphone_amplifier_dac',
+'gerbera_ha_15_tube_amp_electrostatic_planar',
+'gerbera_a8045_tube_headphone_amplifier',
+'gerbera_electrostatic_amplifier',
+'gerbera_attento_otl_tube_electrostatic_headphone_amplifier'
+];
+
+var ALL=GR2.concat(SPEAKERS,AMPS);
+if(ALL.indexOf(PATH)<0)return;
+window.__FILIN_MASTER_PRODUCT_V5_UNIFIED_LOADER_V4__=true;
+
+/* Hard-stop obsolete AMP wrappers if old tags accidentally remain later in HEAD. */
+window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V7__=true;
+window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V6__=true;
+window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V5__=true;
+window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V4__=true;
+window.__FILIN_AMP_FREEZE_COLLECTOR_V2__=true;
+
+var state={version:VERSION,slug:PATH,group:'',ready:false,root:false,pipelineReady:false,released:false,timeout:false,error:''};
+function pub(){window.__FILIN_MASTER_PRODUCT_V5_UNIFIED_LOADER_V4_STATE__=JSON.parse(JSON.stringify(state));}
+function arr(v){return Array.prototype.slice.call(v||[])}
+function has(a,x){return a.indexOf(x)>=0}
+function loaded(src){var f=src.split('/').pop().split('?')[0];return arr(document.scripts).some(function(s){return String(s.src||'').indexOf(f)>=0;});}
+function load(src,test){return new Promise(function(resolve,reject){
+  if(test&&test())return resolve(true);
+  if(loaded(src)){
+    var n=0,t=setInterval(function(){
+      if(!test||test()){clearInterval(t);resolve(true)}
+      else if(++n>220){clearInterval(t);resolve(false)}
+    },50);
+    return;
+  }
+  var s=document.createElement('script');
+  s.src=src;s.async=false;
+  s.onload=function(){resolve(true)};
+  s.onerror=function(){reject(new Error('load failed: '+src))};
+  (document.head||document.documentElement).appendChild(s);
+});}
+function wait(test,ms){return new Promise(function(resolve){
+  var st=Date.now(),t=setInterval(function(){
+    var ok=false;try{ok=!!test()}catch(e){}
+    if(ok){clearInterval(t);resolve(true)}
+    else if(Date.now()-st>(ms||10000)){clearInterval(t);resolve(false)}
+  },50);
+});}
+
+/* Pre-paint curtain: legacy Tilda blocks never become visible during bootstrap. */
+var css=document.createElement('style');
+css.id='filin-v5-unified-preboot-style';
+css.textContent='html.fp-v5-product-boot body{visibility:hidden!important}html.fp-v5-product-boot:after{content:"FILIN LABS";position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;background:#f8f5f1;color:#2d241b;font-family:Montserrat,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:.18em;visibility:visible!important;opacity:1!important}';
+(document.head||document.documentElement).appendChild(css);
+document.documentElement.classList.add('fp-v5-product-boot');
+
+function release(){
+  if(state.released)return;
+  state.released=true;
+  document.documentElement.classList.remove('fp-v5-product-boot');
+  document.documentElement.classList.remove('filin-golden-product-prepaint');
+  var s=document.getElementById('filin-v5-unified-preboot-style');if(s)s.remove();
+  pub();
+}
+
+var CDN='https://cdn.jsdelivr.net/gh/FilinAudio/442-2@';
+var DEP={
+  gr2:CDN+'49d04a0c40288c238cf8c8bf820474eaa111dcd4/filin-master-product-v3-golden-reference-2-batch-v3.js',
+  speakers:CDN+'56f0dd7d22141c36a969f6ce06f708c643ba6e9d/filin-master-product-v3-golden-speakers-batch-v18.js',
+  amp:CDN+'fb04f14e7edc4043971f15ac41bb525f2fbfdcdb/filin-master-product-v4-production-amp-batch-v3.js'
+};
+
+async function boot(){
+  try{
+    var ok=false;
+    if(has(AMPS,PATH)){
+      state.group='tube-amplifiers';pub();
+      await load(DEP.amp,function(){return!!window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V3__});
+      ok=await wait(function(){
+        var s=window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V3_STATE__;
+        return s&&s.ready===true&&s.pmReady===true&&document.querySelector('#'+ROOT+' .v3-shell');
+      },10000);
+    }else if(has(SPEAKERS,PATH)){
+      state.group='speakers';pub();
+      await load(DEP.speakers,function(){return!!window.__FILIN_GOLDEN_SPEAKERS_BATCH_V18__});
+      ok=await wait(function(){
+        var s=window.__FILIN_GOLDEN_SPEAKERS_BATCH_V18_STATE__;
+        return s&&document.querySelector('#'+ROOT+' .v3-shell');
+      },10000);
+    }else{
+      state.group='golden-reference-2';pub();
+      await load(DEP.gr2,function(){return!!window.__FILIN_GR2_BATCH_V3__});
+      ok=await wait(function(){
+        var s=window.__FILIN_GR2_BATCH_V3_STATE__;
+        return s&&s.ready===true&&document.querySelector('#'+ROOT+' .v3-shell');
+      },10000);
+    }
+    state.pipelineReady=!!ok;
+    state.root=!!document.getElementById(ROOT);
+    state.ready=state.pipelineReady&&state.root;
+    if(!state.ready){state.timeout=true;state.error='selected Golden pipeline did not become ready';}
+  }catch(e){state.error=String(e&&e.message||e);}
+  pub();
+  requestAnimationFrame(function(){requestAnimationFrame(release)});
+  if(state.error)console.warn('[Filin V5 Unified]',state.error);
+  else console.info('[Filin Labs] Master Product V5 Unified ready',{version:VERSION,slug:PATH,group:state.group});
+}
+
+setTimeout(function(){
+  if(!state.released){state.timeout=true;state.error=state.error||'failsafe release';release();}
+},12000);
+
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
+else boot();
+pub();
+})();
