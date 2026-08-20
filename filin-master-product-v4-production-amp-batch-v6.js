@@ -1,30 +1,28 @@
 /* ============================================================
    FILIN LABS — MASTER PRODUCT V4 PRODUCTION AMP BATCH V6
-   Version 4.6.0
+   Version 4.6.1
 
-   Production wrapper for the approved 10 tube-amplifier pages.
-   Loads the stable V4.4 pipeline and fixes two confirmed media cases:
+   Production entrypoint for the approved 10 tube-amplifier pages.
 
-   1) HERO RESTORE — all 10 AMP pages
-      - snapshot real Tilda hero URL BEFORE Golden migration
-      - verify it by real image load
-      - re-apply to t-cover carrier after Golden/Tilda lazy passes
+   KT66 special handling:
+   - DOES NOT load V4.5
+   - rejects relative / numeric t396 values BEFORE URL parsing
+   - scans normal Tilda media + Zero Blocks + lazy attrs + CSS backgrounds
+   - verifies candidates by real image load and product-photo dimensions
+   - uses stable AMP V4.3 as the base pipeline for KT66
+   - merges only verified missing images into Golden gallery/profile
+   - repairs/hides dead Golden thumbnails
 
-   2) KT66 COMPLETE GALLERY — targeted only
-      - scan ALL Zero Blocks across product content
-      - accept only real image-looking URLs (never numeric t396 values)
-      - verify dimensions before merging
-      - update profile and rebuild Golden once so thumbs/arrows/autoplay bind
-
-   No global MutationObserver and no repeated console spam.
+   Other 9 AMP pages delegate unchanged to approved V4.4.
    ============================================================ */
 (function(){
 'use strict';
 if(window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V6__)return;
 
-var VERSION='4.6.0';
+var VERSION='4.6.1';
 var ROOT_ID='filin-master-product-v3';
 var PATH=(location.pathname||'/').replace(/^\/+|\/+$/g,'');
+var TARGET='audioinstrument_sirius_kt66_push_pull_tube_amplifier';
 var ALLOWED=[
   'gerbera_lira_compact_tube_amplifier_ultralinear_se',
   'gerbera_2a3_tube_amplifier',
@@ -40,172 +38,99 @@ var ALLOWED=[
 if(ALLOWED.indexOf(PATH)<0)return;
 window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V6__=true;
 
-var TARGET='audioinstrument_sirius_kt66_push_pull_tube_amplifier';
-var V4='https://cdn.jsdelivr.net/gh/FilinAudio/442-2@489bc8c15408dd48cd7b21ab70b257fe2df267e7/filin-master-product-v4-production-amp-batch-v4.js';
-var heroCandidates=[],heroUrl='',zeroCandidates=[],verifiedZero=[],added=0,bad={},rebuilt=false;
-var state={version:VERSION,slug:PATH,ready:false,targeted:PATH===TARGET,heroCandidates:0,heroReady:false,zeroCandidates:0,verifiedZero:0,addedToProfile:0,rebuilt:false,finalGalleryImages:0,badImages:0,lastError:''};
+var V43='https://cdn.jsdelivr.net/gh/FilinAudio/442-2@fb04f14e7edc4043971f15ac41bb525f2fbfdcdb/filin-master-product-v4-production-amp-batch-v3.js';
+var V44='https://cdn.jsdelivr.net/gh/FilinAudio/442-2@489bc8c15408dd48cd7b21ab70b257fe2df267e7/filin-master-product-v4-production-amp-batch-v4.js';
 
-function str(v){return String(v==null?'':v).trim();}
+var candidates=[],verified=[],heroUrls=[],bad={},added=0,repaired=0,removed=0;
+var state={version:VERSION,slug:PATH,ready:false,targeted:PATH===TARGET,candidates:0,verified:0,addedToGolden:0,repaired:0,removedBroken:0,finalGalleryImages:0,badImages:0,rejectedRelative:0,lastError:''};
+function pub(){state.candidates=candidates.length;state.verified=verified.length;state.addedToGolden=added;state.repaired=repaired;state.removedBroken=removed;state.badImages=Object.keys(bad).length;window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V6_STATE__=JSON.parse(JSON.stringify(state));}
+function s(v){return String(v==null?'':v).trim();}
 function arr(v){return Array.prototype.slice.call(v||[]);}
-function pub(){
-  state.heroCandidates=heroCandidates.length;
-  state.heroReady=!!heroUrl;
-  state.zeroCandidates=zeroCandidates.length;
-  state.verifiedZero=verifiedZero.length;
-  state.addedToProfile=added;
-  state.rebuilt=rebuilt;
-  state.badImages=Object.keys(bad).length;
-  window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V6_STATE__=JSON.parse(JSON.stringify(state));
+
+/* Never coerce t396 values such as 1, 5, 10 into /1, /5, /10. */
+function strictUrl(raw){
+  raw=s(raw).replace(/^['"]|['"]$/g,'');
+  if(!raw)return'';
+  if(/^\d+(?:\.\d+)?(?:px|%|deg|s|ms)?$/i.test(raw)){state.rejectedRelative++;return'';}
+  if(/^(none|auto|inherit|initial|unset|cover|contain|center|left|right|top|bottom)$/i.test(raw)){state.rejectedRelative++;return'';}
+  if(/^\/\//.test(raw))raw=location.protocol+raw;
+  if(!/^https?:\/\//i.test(raw)){state.rejectedRelative++;return'';}
+  try{return new URL(raw).href;}catch(e){return'';}
 }
-function rawImageLike(v){
-  v=str(v);if(!v)return false;
-  if(/^\d+(?:\.\d+)?(?:px|%)?$/i.test(v))return false;
-  if(/^(?:#|javascript:|about:|blob:)/i.test(v))return false;
-  if(/^data:image\//i.test(v))return false;
-  if(/^https?:\/\//i.test(v)||/^\/\//.test(v)){
-    try{
-      var u=new URL(v.indexOf('//')===0?location.protocol+v:v,location.href);
-      if(/(?:^|\.)tildacdn\.(?:com|net|info)$/i.test(u.hostname))return true;
-      return /\.(?:jpe?g|png|webp|avif|gif)(?:$|[?#])/i.test(u.pathname+u.search);
-    }catch(e){return false;}
-  }
-  return /(?:^|\/)\S+\.(?:jpe?g|png|webp|avif|gif)(?:$|[?#])/i.test(v);
+function imageLike(u){
+  if(!u)return false;
+  if(/(?:static\.)?tildacdn\.(?:com|net|info)/i.test(u))return true;
+  return /\.(?:jpe?g|png|webp|avif|gif)(?:[?#]|$)/i.test(u);
 }
-function toUrl(v){
-  v=str(v);if(!rawImageLike(v))return'';
-  try{if(v.indexOf('//')===0)v=location.protocol+v;return new URL(v,location.href).href;}catch(e){return'';}
-}
-function validUrl(u){
-  return !!u&&/^https?:\/\//i.test(u)&&!/(blank\.gif|empty\.png|pixel|favicon|logo|sprite|cookie|payment|telegram|whatsapp|youtube|icon[-_.]|social|arrow|spinner|preload|loader|captcha|recaptcha)/i.test(u);
-}
-function add(out,v){var u=toUrl(v);if(validUrl(u)&&out.indexOf(u)<0)out.push(u);}
-function cssUrls(v){var out=[],m,re=/url\(["']?([^"')]+)["']?\)/ig;v=str(v);while((m=re.exec(v)))add(out,m[1]);return out;}
+function valid(u){return imageLike(u)&&!/(blank\.gif|empty\.png|pixel|favicon|logo|sprite|cookie|payment|telegram|whatsapp|youtube|icon[-_.]|social|arrow|spinner|preload|loader|captcha|recaptcha)/i.test(u);}
+function add(out,raw){var u=strictUrl(raw);if(valid(u)&&out.indexOf(u)<0)out.push(u);}
+function cssUrls(v){var out=[],m,re=/url\(["']?([^"')]+)["']?\)/ig;v=s(v);while((m=re.exec(v)))add(out,m[1]);return out;}
 function addEl(out,el){
   if(!el||!el.getAttribute)return;
-  ['data-content-cover-bg','data-original','data-img-zoom-url','data-src','data-lazy-src','data-original-src','src'].forEach(function(a){add(out,el.getAttribute(a));});
+  ['data-content-cover-bg','data-original','data-img-zoom-url','data-bg','data-src','data-lazy-src','data-original-src','src'].forEach(function(a){add(out,el.getAttribute(a));});
   var ss=el.getAttribute('srcset');if(ss)ss.split(',').forEach(function(x){add(out,x.trim().split(/\s+/)[0]);});
-  cssUrls(el.getAttribute('style')).forEach(function(u){add(out,u);});
-  try{cssUrls(getComputedStyle(el).backgroundImage).forEach(function(u){add(out,u);});}catch(e){}
+  cssUrls(el.getAttribute('style')).forEach(function(u){if(out.indexOf(u)<0)out.push(u);});
+  try{cssUrls(getComputedStyle(el).backgroundImage).forEach(function(u){if(out.indexOf(u)<0)out.push(u);});}catch(e){}
 }
-function probe(u,timeout,minW,minH){return new Promise(function(resolve){
-  if(!validUrl(u)){resolve({ok:false,w:0,h:0});return;}
-  var im=new Image(),done=false,tm=setTimeout(function(){finish(false);},timeout||4200);
+function noise(el){return !!(el&&el.closest&&el.closest('header,footer,.t706,.t1002,.t-store__card,.t-popup,[class*="social"],[class*="menu"],[class*="footer"],[class*="header"],[class*="review"]'));}
+function recordNoise(el){var r=el&&el.closest&&el.closest('.t-rec,[id^="rec"]');if(!r)return false;var t=s(r.innerText).toLowerCase();return /perfect matches|shipping|payment|contact|legal|hi-fi\s*&\s*high-end|refer a friend|loyalty|the review|recommended products|you may also like/.test(t);}
+function snapshotHero(){var cover=document.querySelector('.t-cover');if(!cover)return;addEl(heroUrls,cover);arr(cover.querySelectorAll('img,.t-bgimg,[data-original],[data-src],[data-content-cover-bg],[style*="background-image"]')).forEach(function(el){addEl(heroUrls,el);});}
+function snapshotKT66(){
+  snapshotHero();
+  var selector='img,.t-bgimg,[data-original],[data-src],[data-lazy-src],[data-img-zoom-url],[data-content-cover-bg],[data-bg],[style*="background-image"],[data-elem-type="image"],.tn-atom__img,.tn-atom';
+  arr(document.querySelectorAll(selector)).forEach(function(el){
+    if(noise(el)||recordNoise(el)||el.closest('.t-cover'))return;
+    var tmp=[];addEl(tmp,el);tmp.forEach(function(u){if(heroUrls.indexOf(u)<0&&candidates.indexOf(u)<0)candidates.push(u);});
+  });
+  try{performance.getEntriesByType('resource').forEach(function(e){var u=strictUrl(e&&e.name);if(valid(u)&&/tildacdn/i.test(u)&&heroUrls.indexOf(u)<0&&candidates.indexOf(u)<0)candidates.push(u);});}catch(e){}
+  pub();
+}
+function probe(u,timeout){return new Promise(function(resolve){
+  if(!valid(u)){resolve({ok:false,w:0,h:0});return;}
+  var im=new Image(),done=false,tm=setTimeout(function(){finish(false);},timeout||3600);
   function finish(ok){if(done)return;done=true;clearTimeout(tm);resolve({ok:!!ok,w:im.naturalWidth||0,h:im.naturalHeight||0});}
-  im.onload=function(){var w=im.naturalWidth||0,h=im.naturalHeight||0;finish(w>=(minW||500)&&h>=(minH||300));};
+  im.onload=function(){var w=im.naturalWidth||0,h=im.naturalHeight||0,ratio=h?w/h:0;finish(w>=560&&h>=320&&Math.max(w,h)>=700&&ratio>=0.45&&ratio<=2.8);};
   im.onerror=function(){finish(false);};im.src=u;
 });}
-
-function snapshotHero(){
-  var cover=document.querySelector('.t-cover');if(!cover)return;
-  var carrier=cover.querySelector('.t-cover__carrier,[id^="coverCarry"]');
-  if(carrier)addEl(heroCandidates,carrier);
-  addEl(heroCandidates,cover);
-  arr(cover.querySelectorAll('img,.t-bgimg,[data-original],[data-src],[data-content-cover-bg],[style*="background-image"]')).forEach(function(el){addEl(heroCandidates,el);});
-  pub();
-}
-async function chooseHero(){
-  for(var i=0;i<heroCandidates.length;i++){
-    var u=heroCandidates[i],r=await probe(u,4300,700,400);
-    if(r.ok){heroUrl=u;break;}
-  }
-  pub();
-}
-function restoreHero(){
-  if(!heroUrl)return false;
-  var cover=document.querySelector('.t-cover');if(!cover)return false;
-  var carrier=cover.querySelector('.t-cover__carrier,[id^="coverCarry"]');
-  if(!carrier)return false;
-  carrier.setAttribute('data-content-cover-bg',heroUrl);
-  carrier.style.setProperty('background-image','url("'+heroUrl.replace(/"/g,'\\"')+'")','important');
-  carrier.style.setProperty('background-size','cover','important');
-  carrier.style.setProperty('background-position','center center','important');
-  carrier.style.setProperty('background-repeat','no-repeat','important');
-  carrier.style.setProperty('opacity','1','important');
-  carrier.style.setProperty('visibility','visible','important');
-  carrier.classList.add('loaded');
-  cover.style.setProperty('visibility','visible','important');
-  cover.style.setProperty('opacity','1','important');
-  return true;
-}
-
-function recordNoise(r){
-  if(!r)return true;
-  if(r.closest('header,footer,.t706,.t1002,.t-popup'))return true;
-  var t=str(r.innerText).toLowerCase();
-  if(/perfect matches|shipping|payment|contact|legal|hi-fi\s*&\s*high-end|refer a friend|loyalty|reviews?|recommended products|you may also like/.test(t))return true;
-  var viewLinks=arr(r.querySelectorAll('a,button')).filter(function(x){return /^view$/i.test(str(x.textContent));});
-  if(viewLinks.length>=2)return true;
-  return false;
-}
-function snapshotKT66ZeroBlocks(){
-  if(PATH!==TARGET)return;
-  var cover=document.querySelector('.t-cover');
-  arr(document.querySelectorAll('.t-rec,[id^="rec"]')).forEach(function(r){
-    if(recordNoise(r))return;
-    if(!r.querySelector('.t396,.tn-elem,[data-elem-type="image"]'))return;
-    arr(r.querySelectorAll('img,.t-bgimg,.tn-atom__img,.tn-atom,[data-original],[data-src],[data-lazy-src],[data-img-zoom-url],[style*="background-image"],[data-elem-type="image"]')).forEach(function(el){
-      if(cover&&cover.contains(el))return;
-      addEl(zeroCandidates,el);
-    });
-  });
-  zeroCandidates=zeroCandidates.filter(function(u){return heroCandidates.indexOf(u)<0;});
-  pub();
-}
-async function verifyKT66(){
-  if(PATH!==TARGET)return;
-  for(var i=0;i<zeroCandidates.length;i++){
-    var u=zeroCandidates[i],r=await probe(u,4200,700,420),ratio=r.h?r.w/r.h:0;
-    if(r.ok&&Math.max(r.w,r.h)>=900&&ratio>=0.45&&ratio<=2.7)verifiedZero.push(u);else bad[u]=1;
-  }
-  pub();
-}
-
-function loadV4(){return new Promise(function(resolve,reject){
-  if(window.__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V4__){resolve(true);return;}
-  var s=document.createElement('script');s.src=V4;s.async=true;s.onload=function(){resolve(true);};s.onerror=function(){reject(new Error('V4.4 load failed'));};(document.head||document.documentElement).appendChild(s);
-});}
-function waitRoot(ms){return new Promise(function(resolve){var st=Date.now(),t=setInterval(function(){var r=document.getElementById(ROOT_ID);if(r){clearInterval(t);resolve(r);}else if(Date.now()-st>(ms||10000)){clearInterval(t);resolve(null);}},70);});}
+async function verifyAll(){for(var i=0;i<candidates.length;i++){var u=candidates[i],r=await probe(u,3200);if(r.ok)verified.push(u);else bad[u]=1;}pub();}
+function load(src,flag){return new Promise(function(resolve,reject){if(window[flag]){resolve(true);return;}var x=document.createElement('script');x.src=src;x.async=true;x.onload=function(){resolve(true);};x.onerror=function(){reject(new Error('AMP base load failed'));};(document.head||document.documentElement).appendChild(x);});}
+function waitRoot(ms){return new Promise(function(resolve){var st=Date.now(),t=setInterval(function(){var r=document.getElementById(ROOT_ID);if(r){clearInterval(t);resolve(r);}else if(Date.now()-st>(ms||10000)){clearInterval(t);resolve(null);}},60);});}
+function absoluteThumb(t){var im=t&&t.querySelector('img');return strictUrl(im&&(im.currentSrc||im.getAttribute('src')||im.src));}
 function profile(){try{return window.FilinMasterProductV3&&window.FilinMasterProductV3.profiles&&window.FilinMasterProductV3.profiles[PATH]||null;}catch(e){return null;}}
-function currentUrls(root){var out=[];arr(root&&root.querySelectorAll('.v3-thumb img')).forEach(function(im){add(out,im.currentSrc||im.getAttribute('src')||im.src);});return out;}
-function mergeKT66(root){
-  if(PATH!==TARGET||!root)return 0;
-  var p=profile();if(!p)return 0;p.overview=p.overview||{};
-  var xs=Array.isArray(p.overview.galleryImages)?p.overview.galleryImages.slice():[],seen={};
-  xs.forEach(function(u){var x=toUrl(u);if(x)seen[x]=1;});currentUrls(root).forEach(function(u){seen[u]=1;});
-  var n=0;verifiedZero.forEach(function(u){if(!seen[u]){xs.push(u);seen[u]=1;n++;}});
-  if(n){p.overview.galleryImages=xs;added+=n;}
-  pub();return n;
+function profileImages(){var p=profile();return p&&p.overview&&Array.isArray(p.overview.galleryImages)?p.overview.galleryImages:[];}
+function mergeProfile(urls){var p=profile();if(!p)return;p.overview=p.overview||{};var xs=profileImages().slice(),seen={};xs.forEach(function(u){var a=strictUrl(u);if(a)seen[a]=1;});urls.forEach(function(u){if(!seen[u]){xs.push(u);seen[u]=1;}});p.overview.galleryImages=xs;}
+function wireNewThumb(root,b,u){b.addEventListener('click',function(){var main=root.querySelector('.v3-main-img');if(!main)return;var pre=new Image();pre.onload=function(){main.src=u;arr(root.querySelectorAll('.v3-thumb')).forEach(function(x){x.classList.toggle('active',x===b);});};pre.src=u;});}
+function appendMissing(root){
+  if(!root)return;var bar=root.querySelector('.v3-thumbs');if(!bar)return;
+  var seen={};arr(root.querySelectorAll('.v3-thumb')).forEach(function(t){var u=absoluteThumb(t);if(u)seen[u]=1;});
+  var toAdd=verified.filter(function(u){return !seen[u]&&heroUrls.indexOf(u)<0;});
+  toAdd.forEach(function(u){var b=document.createElement('button');b.className='v3-thumb';b.type='button';b.dataset.i=String(bar.querySelectorAll('.v3-thumb').length);var im=document.createElement('img');im.src=u;im.alt='';im.decoding='async';im.loading='eager';b.appendChild(im);wireNewThumb(root,b,u);bar.appendChild(b);seen[u]=1;added++;});
+  mergeProfile(toAdd);state.finalGalleryImages=root.querySelectorAll('.v3-thumb').length;pub();
 }
-function rebuildOnce(){
-  if(rebuilt)return;
-  var api=window.FilinMasterProductV3;if(!api||typeof api.apply!=='function')return;
-  rebuilt=true;api.apply();
-  setTimeout(function(){try{window.FilinMasterProductV3RegistryInteractions&&window.FilinMasterProductV3RegistryInteractions.apply&&window.FilinMasterProductV3RegistryInteractions.apply();}catch(e){}},80);
-  pub();
+async function audit(root){
+  if(!root)return;var ts=arr(root.querySelectorAll('.v3-thumb')),used={},pool=verified.slice();
+  ts.forEach(function(t){var u=absoluteThumb(t);if(u)used[u]=1;});pool=pool.filter(function(u){return !used[u]&&heroUrls.indexOf(u)<0;});
+  for(var i=0;i<ts.length;i++){
+    var t=ts[i],u=absoluteThumb(t);if(!u){t.style.display='none';removed++;continue;}
+    var r=await probe(u,2400);if(r.ok)continue;bad[u]=1;
+    var rep='';while(pool.length&&!rep){var c=pool.shift(),pr=await probe(c,2000);if(pr.ok)rep=c;}
+    var im=t.querySelector('img');if(rep&&im){im.src=rep;im.setAttribute('src',rep);im.removeAttribute('srcset');t.style.display='';wireNewThumb(root,t,rep);repaired++;}else{t.style.display='none';removed++;}
+  }
+  state.finalGalleryImages=arr(root.querySelectorAll('.v3-thumb')).filter(function(t){return getComputedStyle(t).display!=='none';}).length;pub();
 }
-
 async function boot(){
   try{
-    /* Capture native sources before V4.4 can rewrite/quarantine legacy records. */
-    snapshotHero();
-    snapshotKT66ZeroBlocks();
-    await Promise.all([chooseHero(),verifyKT66()]);
-    await loadV4();
-    var root=await waitRoot(11000);if(!root)throw new Error('Golden root timeout');
-
-    restoreHero();
-    [350,900,1800,3600,6200].forEach(function(ms){setTimeout(restoreHero,ms);});
-
-    if(PATH===TARGET&&mergeKT66(root)>0){
-      rebuildOnce();
-      root=await waitRoot(5000)||document.getElementById(ROOT_ID);
-    }
-    state.finalGalleryImages=root?root.querySelectorAll('.v3-thumb').length:0;
+    if(PATH!==TARGET){await load(V44,'__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V4__');state.ready=true;pub();return;}
+    snapshotKT66();await verifyAll();
+    /* KT66 deliberately uses V4.3 base so V4.4 cannot coerce t396 numeric values into URLs. */
+    await load(V43,'__FILIN_MASTER_PRODUCT_V4_AMP_BATCH_V3__');
+    var root=await waitRoot(10000);if(!root)throw new Error('Golden root timeout');
+    appendMissing(root);await audit(root);
+    setTimeout(function(){var r=document.getElementById(ROOT_ID);appendMissing(r);audit(r);},1600);
     state.ready=true;pub();
-    console.info('[Filin Labs] Master Product V4 AMP Batch V6 ready',{version:VERSION,slug:PATH,ready:true,heroReady:!!heroUrl,targeted:PATH===TARGET,zeroCandidates:zeroCandidates.length,verifiedZero:verifiedZero.length,addedToProfile:added,rebuilt:rebuilt,finalGalleryImages:state.finalGalleryImages,badImages:Object.keys(bad).length});
+    console.info('[Filin Labs] Master Product V4 AMP Batch V6 ready',{version:VERSION,slug:PATH,ready:true,candidates:candidates.length,verified:verified.length,addedToGolden:added,repaired:repaired,removedBroken:removed,rejectedRelative:state.rejectedRelative,finalGalleryImages:state.finalGalleryImages});
   }catch(e){state.lastError=String(e&&e.message||e);pub();console.warn('[Filin V4.6]',state.lastError);}
 }
-
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,0);},{once:true});else setTimeout(boot,0);
 pub();
 })();
