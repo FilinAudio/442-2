@@ -371,6 +371,7 @@
   var AUTOPLAY_MS=4200;
   var USER_PAUSE_MS=7000;
   var MAX_MOBILE=820;
+  var IX={root:null,token:null,autoplay:null,resumeTimer:null};
 
   function installStyle(){
     if(document.getElementById(STYLE_ID)) return;
@@ -611,6 +612,20 @@
     if(target) target.click();
   }
 
+  function next(root){
+    if(!root) return;
+    var images=getImages(root);
+    if(images.length<2) return;
+    clickIndex(root,getCurrentIndex(root,images)+1);
+  }
+
+  function prev(root){
+    if(!root) return;
+    var images=getImages(root);
+    if(images.length<2) return;
+    clickIndex(root,getCurrentIndex(root,images)-1);
+  }
+
   function ensureLightbox(){
     var lb=document.getElementById(LIGHTBOX_ID);
 
@@ -758,20 +773,44 @@
     }
   }
 
-  function stopAutoplay(root){
-    if(root.__fpv3GalleryTimer){
-      clearInterval(root.__fpv3GalleryTimer);
-      root.__fpv3GalleryTimer=null;
+  function pauseAutoplay(root,ms){
+    if(!root || IX.root!==root) return;
+
+    if(IX.autoplay){
+      clearInterval(IX.autoplay);
+      IX.autoplay=null;
     }
 
-    if(root.__fpv3ResumeTimer){
-      clearTimeout(root.__fpv3ResumeTimer);
-      root.__fpv3ResumeTimer=null;
+    if(IX.resumeTimer){
+      clearTimeout(IX.resumeTimer);
+      IX.resumeTimer=null;
     }
+
+    IX.resumeTimer=setTimeout(function(){
+      startAutoplay(root);
+    },ms||USER_PAUSE_MS);
+  }
+
+  function resumeAutoplay(root,delay){
+    if(!root || IX.root!==root) return;
+
+    if(IX.resumeTimer){
+      clearTimeout(IX.resumeTimer);
+      IX.resumeTimer=null;
+    }
+
+    IX.resumeTimer=setTimeout(function(){
+      startAutoplay(root);
+    },delay||0);
   }
 
   function startAutoplay(root){
-    stopAutoplay(root);
+    if(!root) return;
+
+    if(IX.autoplay){
+      clearInterval(IX.autoplay);
+      IX.autoplay=null;
+    }
 
     var thumbs=root.querySelectorAll('.v3-thumb');
 
@@ -784,9 +823,10 @@
       return;
     }
 
-    root.__fpv3GalleryTimer=setInterval(function(){
+    IX.autoplay=setInterval(function(){
       if(!document.documentElement.contains(root)){
-        stopAutoplay(root);
+        clearInterval(IX.autoplay);
+        IX.autoplay=null;
         return;
       }
 
@@ -794,50 +834,34 @@
 
       if(lb && lb.classList.contains('open')) return;
 
-      var images=getImages(root);
-      var idx=getCurrentIndex(root,images);
-
-      clickIndex(root,idx+1);
+      next(root);
     },AUTOPLAY_MS);
   }
 
-  function pauseAutoplay(root,ms){
-    if(root.__fpv3GalleryTimer){
-      clearInterval(root.__fpv3GalleryTimer);
-      root.__fpv3GalleryTimer=null;
-    }
+  function onGalleryClick(e){
+    var root=e.currentTarget;
 
-    if(root.__fpv3ResumeTimer){
-      clearTimeout(root.__fpv3ResumeTimer);
-    }
+    if(!root || IX.root!==root) return;
 
-    root.__fpv3ResumeTimer=setTimeout(function(){
-      startAutoplay(root);
-    },ms||USER_PAUSE_MS);
+    var target=e.target;
+    var control=target&&target.closest
+      ? target.closest('.v3-thumb,.v3-gallery-arrow')
+      : null;
+
+    if(!control || !root.contains(control)) return;
+
+    pauseAutoplay(root,USER_PAUSE_MS);
   }
 
-  function resumeAutoplay(root,delay){
-    if(root.__fpv3ResumeTimer){
-      clearTimeout(root.__fpv3ResumeTimer);
-    }
+  function bindGallery(root){
+    if(!root || root.dataset.fpv3GalleryDelegated==='1') return;
 
-    root.__fpv3ResumeTimer=setTimeout(function(){
-      startAutoplay(root);
-    },delay||0);
-  }
-
-  function bindAutoplay(root){
-    if(root.dataset.fpv3AutoplayBound==='1'){
-      return;
-    }
+    root.dataset.fpv3GalleryDelegated='1';
+    root.addEventListener('click',onGalleryClick);
 
     var gallery=root.querySelector('.v3-gallery');
 
-    if(!gallery){
-      return;
-    }
-
-    root.dataset.fpv3AutoplayBound='1';
+    if(!gallery) return;
 
     ['pointerdown','touchstart','wheel'].forEach(function(type){
       gallery.addEventListener(
@@ -850,111 +874,83 @@
     });
 
     gallery.addEventListener('mouseenter',function(){
-      if(root.__fpv3GalleryTimer){
-        clearInterval(root.__fpv3GalleryTimer);
-        root.__fpv3GalleryTimer=null;
-      }
+      pauseAutoplay(root,USER_PAUSE_MS);
     });
 
     gallery.addEventListener('mouseleave',function(){
       resumeAutoplay(root,500);
     });
-
-    root.querySelectorAll('.v3-gallery-arrow,.v3-thumb')
-      .forEach(function(el){
-        el.addEventListener('click',function(){
-          pauseAutoplay(root,USER_PAUSE_MS);
-        });
-      });
-
-    startAutoplay(root);
   }
 
-function bindRoot(root){
-  if(!root) return;
-
-  if(
-    root.getAttribute(
-      'data-filin-v3-registry-interactions'
-    )==='1.0.0'
-  ){
-    return;
+  function findRoot(){
+    return document.getElementById(ROOT_ID);
   }
 
-  /*
-    LOCK FIRST.
-
-    MutationObserver can fire again while the current
-    bind operation is still running. The root must be
-    marked as initialized BEFORE any DOM/listener work.
-  */
-  root.setAttribute(
-    'data-filin-v3-registry-interactions',
-    '1.0.0'
-  );
-
-  installStyle();
-  bindLightbox(root);
-  bindAutoplay(root);
-
-  console.info(
-    '[Master Product V3] INTERACTIONS V1 APPLIED',
-    {
-      galleryImages:getImages(root).length,
-      autoplayMs:AUTOPLAY_MS
-    }
-  );
-}
-
-  /*
-    Public apply() must ALWAYS go through safeApply().
-
-    This prevents external code from bypassing the
-    data-filin-v3-registry-interactions idempotency guard.
-  */
-  function apply(){
-    safeApply();
-  }
-
-  function safeApply(){
-    var root=document.getElementById(ROOT_ID);
-
+  function applyInteractions(root){
     if(!root) return;
 
-    if(
-      root.getAttribute(
-        'data-filin-v3-registry-interactions'
-      )==='1.0.0'
-    ){
-      return;
+    var main=root.querySelector('.v3-main-img');
+    var token=root.querySelectorAll('.v3-thumb').length+':' +
+               ((main||{}).src||'');
+
+    if(IX.root===root && IX.token===token) return;
+
+    if(IX.autoplay){
+      clearInterval(IX.autoplay);
+      IX.autoplay=null;
     }
 
-    bindRoot(root);
+    if(IX.resumeTimer){
+      clearTimeout(IX.resumeTimer);
+      IX.resumeTimer=null;
+    }
+
+    installStyle();
+    bindLightbox(root);
+
+    /* delegation — one gallery click handler on root instead of listeners on every control */
+    if(IX.root!==root){
+      root.addEventListener('click',onGalleryClick);
+    }
+
+    bindGallery(root);
+
+    IX.root=root;
+    IX.token=token;
+
+    startAutoplay(root);
+
+    console.info('[Master Product V3] INTERACTIONS V1 APPLIED',
+      {galleryImages:root.querySelectorAll('.v3-thumb').length,autoplayMs:AUTOPLAY_MS});
+  }
+
+  function apply(){
+    applyInteractions(findRoot());
   }
 
   if(document.readyState==='loading'){
-    document.addEventListener(
-      'DOMContentLoaded',
-      safeApply,
-      {once:true}
-    );
+    document.addEventListener('DOMContentLoaded',function(){
+      applyInteractions(findRoot());
+    },{once:true});
   }else{
-    safeApply();
+    applyInteractions(findRoot());
   }
 
   var mo=new MutationObserver(function(){
-    safeApply();
+    applyInteractions(findRoot());
   });
 
-  mo.observe(document.documentElement,{
-    childList:true,
-    subtree:true
-  });
+  mo.observe(document.documentElement,{childList:true,subtree:true});
 
-  window.FilinMasterProductV3RegistryInteractions=
-    Object.freeze({
-      version:'1.0.0',
-      apply:apply
-    });
+  document.addEventListener('filin:product:ready',function(){
+    setTimeout(function(){
+      try{ mo.disconnect(); }catch(e){}
+    },1500);
+  },{once:true});
+
+  window.FilinMasterProductV3RegistryInteractions=Object.freeze({
+    version:'1.0.0',
+    apply:apply
+  });
 
 })();
