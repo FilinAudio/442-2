@@ -372,6 +372,8 @@
   var USER_PAUSE_MS=7000;
   var MAX_MOBILE=820;
 
+  var IX={root:null,token:null,autoplay:null};
+
   function installStyle(){
     if(document.getElementById(STYLE_ID)) return;
 
@@ -860,42 +862,43 @@
       resumeAutoplay(root,500);
     });
 
-    root.querySelectorAll('.v3-gallery-arrow,.v3-thumb')
-      .forEach(function(el){
-        el.addEventListener('click',function(){
-          pauseAutoplay(root,USER_PAUSE_MS);
-        });
-      });
+    /* single delegated handler instead of one listener per thumb/arrow */
+    root.addEventListener('click',function(e){
+      if(e.target.closest('.v3-gallery-arrow,.v3-thumb')){
+        pauseAutoplay(root,USER_PAUSE_MS);
+      }
+    });
 
     startAutoplay(root);
   }
 
-function bindRoot(root){
+function computeToken(root){
+  var thumbs=root.querySelectorAll('.v3-thumb').length;
+  var main=root.querySelector('.v3-main-img');
+  var src=main?(main.currentSrc||main.src||main.getAttribute('src')||''):'';
+  return thumbs+'|'+src;
+}
+
+function applyInteractions(root){
   if(!root) return;
 
-  if(
-    root.getAttribute(
-      'data-filin-v3-registry-interactions'
-    )==='1.0.0'
-  ){
-    return;
+  var token=computeToken(root);
+
+  /* same root + same gallery content already wired: skip re-init */
+  if(IX.root===root && IX.token===token) return;
+
+  if(IX.autoplay){
+    clearInterval(IX.autoplay);
+    IX.autoplay=null;
   }
-
-  /*
-    LOCK FIRST.
-
-    MutationObserver can fire again while the current
-    bind operation is still running. The root must be
-    marked as initialized BEFORE any DOM/listener work.
-  */
-  root.setAttribute(
-    'data-filin-v3-registry-interactions',
-    '1.0.0'
-  );
 
   installStyle();
   bindLightbox(root);
   bindAutoplay(root);
+
+  IX.root=root;
+  IX.token=token;
+  IX.autoplay=root.__fpv3GalleryTimer||null;
 
   console.info(
     '[Master Product V3] INTERACTIONS V1 APPLIED',
@@ -910,7 +913,7 @@ function bindRoot(root){
     Public apply() must ALWAYS go through safeApply().
 
     This prevents external code from bypassing the
-    data-filin-v3-registry-interactions idempotency guard.
+    IX root+token idempotency guard.
   */
   function apply(){
     safeApply();
@@ -918,18 +921,7 @@ function bindRoot(root){
 
   function safeApply(){
     var root=document.getElementById(ROOT_ID);
-
-    if(!root) return;
-
-    if(
-      root.getAttribute(
-        'data-filin-v3-registry-interactions'
-      )==='1.0.0'
-    ){
-      return;
-    }
-
-    bindRoot(root);
+    applyInteractions(root);
   }
 
   if(document.readyState==='loading'){
@@ -950,6 +942,20 @@ function bindRoot(root){
     childList:true,
     subtree:true
   });
+
+  function disconnectRegistryObserver(){
+    if(!mo) return;
+    try{ mo.disconnect(); }catch(e){}
+    mo=null;
+  }
+
+  /* product build is done and stable: stop watching the whole page */
+  document.addEventListener('filin:product:ready',function(){
+    safeApply();
+    disconnectRegistryObserver();
+  },{once:true});
+
+  setTimeout(disconnectRegistryObserver,20000);
 
   window.FilinMasterProductV3RegistryInteractions=
     Object.freeze({
