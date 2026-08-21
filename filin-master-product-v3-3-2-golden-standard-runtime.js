@@ -387,7 +387,9 @@
     var p=profile(); if(!p){console.warn('[Master Product V3] profile not found for slug',slug());return false;}
     document.documentElement.setAttribute('data-filin-master-v3','1');
     installCSS();bindHero(p);bindCurator(p);build(p);updateSticky(p);
-    console.info('[Master Product V3] GOLDEN STANDARD APPLIED',{version:VERSION,slug:p.slug,price:p.commerce.basePrice});return true;
+    console.info('[Master Product V3] GOLDEN STANDARD APPLIED',{version:VERSION,slug:p.slug,price:p.commerce.basePrice});
+    try{document.dispatchEvent(new CustomEvent('filin:product:ready',{detail:{slug:p.slug,version:VERSION}}));}catch(e){}
+    return true;
   }
 
   window.FilinMasterProductV3=Object.freeze({version:VERSION,profiles:PROFILES,get:function(s){return PROFILES[String(s||'')]||null;},apply:apply});
