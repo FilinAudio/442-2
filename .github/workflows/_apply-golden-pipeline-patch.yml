@@ -88,5 +88,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add filin-master-product-v3-3-2-golden-standard-runtime.js filin-master-product-v3-profiles-registry-v1.js .github/workflows/_apply-golden-pipeline-patch.yml
           git diff --cached --check
-          git commit -m "Wire Golden build through FLPipeline" 
+          git commit -m "Wire Golden build through FLPipeline"
           git push origin HEAD:fix/golden-pipeline-interactions-2026-08-21
