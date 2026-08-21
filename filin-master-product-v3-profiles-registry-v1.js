@@ -873,10 +873,11 @@
   }
 
 function computeToken(root){
-  var thumbs=root.querySelectorAll('.v3-thumb').length;
-  var main=root.querySelector('.v3-main-img');
-  var src=main?(main.currentSrc||main.src||main.getAttribute('src')||''):'';
-  return thumbs+'|'+src;
+  var imgs=root.querySelectorAll('.v3-thumb img');
+  var srcs=Array.prototype.map.call(imgs,function(img){
+    return img.currentSrc||img.src||img.getAttribute('src')||'';
+  });
+  return imgs.length+'|'+srcs.join(',');
 }
 
 function applyInteractions(root){
