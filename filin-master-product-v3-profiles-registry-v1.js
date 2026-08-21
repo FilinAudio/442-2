@@ -428,17 +428,32 @@
 
   function apply(){ bindRoot(document.getElementById(ROOT_ID)); }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',apply,{once:true});
-  else apply();
+function safeApply(){
+  var root = document.getElementById(ROOT_ID);
+  if (!root) return;
 
-  [400,900,1600,2800,4500,7000].forEach(function(ms){setTimeout(apply,ms);});
+  if (root.getAttribute('data-filin-v3-registry-interactions') === '1.0.0') {
+    return;
+  }
 
-  var mo = new MutationObserver(function(){
-    var root = document.getElementById(ROOT_ID);
-    if (!root) return;
-    if (root.getAttribute('data-filin-v3-registry-interactions') !== '1.0.0') bindRoot(root);
-  });
-  mo.observe(document.documentElement,{childList:true,subtree:true});
+  bindRoot(root);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', safeApply, {once:true});
+} else {
+  safeApply();
+}
+
+var mo = new MutationObserver(function(){
+  safeApply();
+});
+
+mo.observe(document.documentElement, {
+  childList: true,
+  subtree: true
+});
+   mo.observe(document.documentElement,{childList:true,subtree:true});
 
   window.FilinMasterProductV3RegistryInteractions = Object.freeze({version:'1.0.0',apply:apply});
 })();
