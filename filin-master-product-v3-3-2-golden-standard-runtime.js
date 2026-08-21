@@ -391,9 +391,27 @@
   }
 
   window.FilinMasterProductV3=Object.freeze({version:VERSION,profiles:PROFILES,get:function(s){return PROFILES[String(s||'')]||null;},apply:apply});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
-  setTimeout(function(){if(!document.getElementById(ROOT_ID))apply();else updateSticky(profile()||{});},900);
-  setTimeout(function(){if(!document.getElementById(ROOT_ID))apply();else updateSticky(profile()||{});},2400);
-  setTimeout(function(){updateSticky(profile()||{});},4800);
-  setTimeout(function(){updateSticky(profile()||{});},8000);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function () {
+    apply();
+  }, {once:true});
+} else {
+  apply();
+}
+   
+setTimeout(function(){
+  updateSticky(profile() || {});
+}, 900);
+
+setTimeout(function(){
+  updateSticky(profile() || {});
+}, 2400);
+
+setTimeout(function(){
+  updateSticky(profile() || {});
+}, 4800);
+
+setTimeout(function(){
+  updateSticky(profile() || {});
+}, 8000);
 })();
