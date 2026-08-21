@@ -1,0 +1,30 @@
+/* FILIN LABS — MEMBERS V4 SHIPPING RECOVERY
+   Extracted CSS only. Runtime logic remains in the Tilda Header block.
+*/
+
+/* Final Profile/Shipping alignment */
+body.filin-members-v3 #filin-profile-shipping{
+  box-sizing:border-box!important;
+  margin-top:24px!important;
+  margin-bottom:50px!important;
+  background:#fff!important;
+}
+
+body.filin-members-v3 #filin-profile-shipping h2{
+  font-family:'Montserrat',Arial,sans-serif!important;
+  font-size:18px!important;
+  line-height:1.25!important;
+  font-weight:700!important;
+}
+
+body.filin-members-v3 #filin-profile-shipping label{
+  font-family:'Montserrat',Arial,sans-serif!important;
+  font-size:12px!important;
+  font-weight:400!important;
+}
+
+body.filin-members-v3 #filin-profile-shipping input,
+body.filin-members-v3 #filin-profile-shipping textarea,
+body.filin-members-v3 #filin-profile-shipping button{
+  font-family:'Montserrat',Arial,sans-serif!important;
+}
