@@ -1,0 +1,111 @@
+/* FILIN LABS — PURCHASED PRODUCTS FIREBASE VERIFICATION V2
+   Extracted CSS only. Runtime verification logic remains in the Tilda Header block.
+*/
+
+/* FILIN LABS — VERIFIED PURCHASED PRODUCTS */
+.tmst-purchased__details__product-title{
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+  max-width:none!important;
+}
+.tmst-purchased__product-details__description,
+.tmst-purchased__product-details__col-1{
+  min-width:0!important;
+}
+
+/* Prevent stale native Tilda "purchased" rows flashing before Firebase verification. */
+html.filin-purchased-verifying article.tmst-purchased__list-item{
+  visibility:hidden!important;
+}
+
+#filin-purchased-filter-empty,
+#filin-purchased-filter-empty *{
+  box-sizing:border-box;
+  font-family:'Montserrat',Arial,sans-serif!important;
+}
+#filin-purchased-filter-empty{
+  width:min(1020px,calc(100% - 30px));
+  margin:28px auto 54px;
+}
+#filin-purchased-filter-empty .flpp-empty-card{
+  padding:38px 40px;
+  border:1px solid #ddd8d3;
+  border-radius:16px;
+  background:#fff;
+}
+#filin-purchased-filter-empty .flpp-empty-eyebrow{
+  margin-bottom:10px;
+  color:#BC8C5E;
+  font-size:10px;
+  line-height:1.4;
+  font-weight:800;
+  letter-spacing:.12em;
+}
+#filin-purchased-filter-empty h2{
+  margin:0 0 12px;
+  color:#111;
+  font-size:28px;
+  line-height:1.08;
+  font-weight:800;
+  text-transform:uppercase;
+}
+#filin-purchased-filter-empty p{
+  max-width:680px;
+  margin:0 0 22px;
+  color:#625d58;
+  font-size:13px;
+  line-height:1.6;
+}
+#filin-purchased-filter-empty a{
+  display:inline-flex;
+  align-items:center;
+  gap:18px;
+  min-height:44px;
+  padding:11px 18px;
+  border-radius:999px;
+  background:#080808;
+  color:#fff!important;
+  text-decoration:none!important;
+  font-size:11px;
+  font-weight:800;
+}
+
+@media(max-width:700px){
+  .tmst-purchased__product-details{
+    min-width:0!important;
+  }
+  .tmst-purchased__product-details__col-1{
+    min-width:0!important;
+    flex:1 1 auto!important;
+  }
+  .tmst-purchased__product-details__description{
+    min-width:0!important;
+    max-width:100%!important;
+    overflow:visible!important;
+  }
+  .tmst-purchased__details__product-title{
+    width:auto!important;
+    min-width:0!important;
+    max-width:100%!important;
+    font-size:14px!important;
+    line-height:1.25!important;
+    overflow-wrap:anywhere!important;
+  }
+  #filin-purchased-filter-empty{
+    width:calc(100% - 24px);
+    margin:20px auto 36px;
+  }
+  #filin-purchased-filter-empty .flpp-empty-card{
+    padding:28px 22px;
+  }
+  #filin-purchased-filter-empty h2{
+    font-size:24px;
+  }
+  #filin-purchased-filter-empty a{
+    width:100%;
+    justify-content:space-between;
+  }
+}
