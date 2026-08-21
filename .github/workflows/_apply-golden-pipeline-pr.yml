@@ -2,7 +2,7 @@ name: Apply Golden Pipeline Patch (temporary)
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, synchronize]
 
 permissions:
   contents: write
