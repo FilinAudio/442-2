@@ -1,0 +1,507 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+
+  .flwarranty-lock,
+  .flwarranty-lock body {
+    overflow: hidden !important;
+  }
+
+  #flwarranty-overlay,
+  #flwarranty-overlay * {
+    box-sizing: border-box;
+    font-family: 'Montserrat', Arial, sans-serif !important;
+  }
+
+  #flwarranty-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: rgba(15, 13, 11, .62);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+
+  #flwarranty-overlay.is-open {
+    display: flex;
+  }
+
+  .flwarranty-dialog {
+    position: relative;
+    width: min(1080px, 96vw);
+    min-height: min(638px, 90vh);
+    max-height: min(836px, 94vh);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+    background: #fff;
+    border: 3px solid #17130f;
+    border-radius: 22px;
+    box-shadow:
+      0 30px 90px rgba(0,0,0,.30),
+      0 0 0 1px rgba(188,140,94,.28);
+  }
+
+  .flwarranty-close {
+    position: absolute;
+    top: 15px;
+    right: 17px;
+    z-index: 5;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,.82);
+    color: #241d17;
+    font-size: 25px;
+    font-weight: 400;
+    line-height: 1;
+    cursor: pointer;
+    transition: .2s ease;
+  }
+
+  .flwarranty-close:hover {
+    background: #f3ede8;
+    transform: rotate(4deg);
+  }
+
+  .flwarranty-left {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 48px 48px 28px;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(188,140,94,.12), transparent 35%),
+      #f8f6f3;
+    border-right: 1px solid #ece4dc;
+  }
+
+  .flwarranty-left h2 {
+    margin: 0 0 30px;
+    color: #17130f;
+    font-size: 28px;
+    line-height: 1.18;
+    font-weight: 800;
+    letter-spacing: -.025em;
+  }
+
+  .flwarranty-benefits {
+    display: grid;
+    gap: 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .flwarranty-benefits li {
+    display: grid;
+    grid-template-columns: 24px minmax(0,1fr);
+    gap: 13px;
+    align-items: start;
+    color: #504a45;
+    font-size: 14px;
+    line-height: 1.52;
+    font-weight: 500;
+  }
+
+  .flwarranty-shield {
+    width: 22px;
+    height: 22px;
+    margin-top: 0;
+    color: #BC8C5E;
+  }
+
+  .flwarranty-trust {
+    margin-top: auto;
+    padding-top: 30px;
+    text-align: center;
+  }
+
+  .flwarranty-brand-logo {
+    display: block;
+    width: 72px;
+    height: 69px;
+    margin: 0 auto 12px;
+    object-fit: cover;
+    border-radius: 13px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.12);
+  }
+
+  .flwarranty-trust-stars {
+    color: #BC8C5E;
+    font-size: 22px;
+    letter-spacing: 4px;
+    line-height: 1;
+  }
+
+  .flwarranty-trust-text {
+    margin-top: 9px;
+    color: #4c4641;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .flwarranty-trust-brand {
+    margin-top: 18px;
+    color: #17130f;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: .08em;
+  }
+
+  .flwarranty-right {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 42px 28px;
+    background: #fff;
+  }
+
+  .flwarranty-product-title {
+    min-height: 46px;
+    width: 100%;
+    margin: 18px 0 14px;
+    padding: 0 38px;
+    color: #17130f;
+    font-size: 19px;
+    line-height: 1.22;
+    font-weight: 800;
+    text-align: center;
+    white-space: normal;
+    overflow: visible;
+    text-wrap: balance;
+  }
+
+  .flwarranty-product-image-wrap {
+    width: min(100%, 360px);
+    aspect-ratio: 16 / 9;
+    display: grid;
+    place-items: center;
+    align-self: center;
+    margin: 0 auto 10px;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 10px;
+  }
+
+  .flwarranty-product-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 16px rgba(31,22,13,.10));
+  }
+
+  .flwarranty-product-image.is-empty {
+    display: none;
+  }
+
+  .flwarranty-heading {
+    margin: 18px 0 20px;
+    color: #17130f;
+    font-size: 19px;
+    line-height: 1.35;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .flwarranty-plans {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 9px;
+  }
+
+  .flwarranty-plan {
+    position: relative;
+    min-width: 0;
+    min-height: 138px;
+    padding: 15px 11px 12px;
+    border: 1.5px solid #d8d0c9;
+    border-radius: 12px;
+    background: #fff;
+    color: #17130f;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color .18s ease,
+      box-shadow .18s ease,
+      transform .18s ease,
+      background .18s ease;
+  }
+
+  .flwarranty-plan:hover {
+    border-color: #BC8C5E;
+    transform: translateY(-1px);
+  }
+
+  .flwarranty-plan.is-selected {
+    border: 2px solid #BC8C5E;
+    background: #fffaf5;
+    box-shadow:
+      0 0 0 3px rgba(188,140,94,.12),
+      0 8px 22px rgba(86,54,24,.08);
+  }
+
+  .flwarranty-plan.is-recommended::after {
+    content: "BEST VALUE";
+    position: absolute;
+    top: 9px;
+    right: -22px;
+    width: 83px;
+    padding: 4px 0;
+    background: #BC8C5E;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    transform: rotate(39deg);
+    box-shadow: 0 2px 7px rgba(0,0,0,.12);
+  }
+
+  .flwarranty-plan-years {
+    display: block;
+    margin-bottom: 9px;
+    font-size: 23.4px;
+    line-height: 1.08;
+    font-weight: 700;
+  }
+
+  .flwarranty-plan-total {
+    display: block;
+    min-height: 42px;
+    color: #6f6862;
+    font-size: 13px;
+    line-height: 1.28;
+    font-weight: 600;
+  }
+
+  .flwarranty-total-years {
+    white-space: nowrap;
+  }
+
+  .flwarranty-plan-price {
+    display: block;
+    margin-top: 8px;
+    color: #17130f;
+    font-size: 15px;
+    line-height: 1;
+    font-weight: 800;
+  }
+
+  .flwarranty-check {
+    position: absolute;
+    right: 9px;
+    bottom: 9px;
+    width: 19px;
+    height: 19px;
+    display: none;
+    place-items: center;
+    border-radius: 50%;
+    background: #BC8C5E;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .flwarranty-plan.is-selected .flwarranty-check {
+    display: grid;
+  }
+
+  .flwarranty-protect,
+  .flwarranty-decline {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 999px;
+    font-size: 13px;
+    line-height: 1;
+    font-weight: 800;
+    cursor: pointer;
+    transition: .2s ease;
+  }
+
+  .flwarranty-protect {
+    margin-top: 17px;
+    border: 1px solid #BC8C5E;
+    background: linear-gradient(100deg, #8e663f, #BC8C5E 48%, #9c7045);
+    color: #fff;
+    box-shadow: 0 9px 24px rgba(132,86,41,.19);
+  }
+
+  .flwarranty-protect:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+
+  .flwarranty-decline {
+    margin-top: 9px;
+    margin-bottom: 18px;
+    border: 1px solid #d8d0c9;
+    background: #fff;
+    color: #17130f;
+  }
+
+  .flwarranty-decline:hover {
+    border-color: #BC8C5E;
+    color: #8e663f;
+  }
+
+  .flwarranty-inline-terms {
+    color: #9b6e42;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .flwarranty-mobile-terms,
+  .flwarranty-mobile-trust {
+    display: none;
+  }
+
+  @media (max-width: 760px) {
+    #flwarranty-overlay {
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .flwarranty-dialog {
+      width: min(100%, 430px);
+      min-height: min(610px, calc(100dvh - 20px));
+      max-height: calc(100dvh - 12px);
+      grid-template-columns: 1fr;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      border-width: 2px;
+      border-radius: 18px;
+      margin: 0 auto;
+    }
+
+    .flwarranty-left {
+      display: none;
+    }
+
+    .flwarranty-right {
+      padding: 16px 16px 16px;
+    }
+
+    .flwarranty-close {
+      top: 8px;
+      right: 9px;
+      width: 34px;
+      height: 34px;
+      font-size: 22px;
+    }
+
+    .flwarranty-product-title {
+      min-height: 44px;
+      width: 100%;
+      margin: 18px 0 10px;
+      padding: 0 26px;
+      font-size: 17px;
+      line-height: 1.22;
+      font-weight: 800;
+      text-align: center;
+      white-space: normal;
+      overflow: visible;
+      text-wrap: balance;
+    }
+
+    .flwarranty-product-image-wrap {
+      width: min(100%, 245px);
+      aspect-ratio: 16 / 9;
+      height: auto;
+      margin: 0 auto 7px;
+    }
+
+    .flwarranty-product-image {
+      width: 100%;
+      height: 100%;
+      max-height: none;
+      object-fit: contain;
+    }
+
+    .flwarranty-heading {
+      margin: 16px 0 18px;
+      font-size: 19px;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .flwarranty-plans {
+      gap: 6px;
+    }
+
+    .flwarranty-plan {
+      min-height: 124px;
+      padding: 13px 8px 10px;
+      border-radius: 10px;
+    }
+
+    .flwarranty-plan-years {
+      margin-bottom: 8px;
+      font-size: 19.5px;
+      line-height: 1.08;
+    }
+
+    .flwarranty-plan-total {
+      min-height: 38px;
+      font-size: 11.7px;
+      line-height: 1.28;
+    }
+
+    .flwarranty-plan-price {
+      font-size: 13px;
+    }
+
+    .flwarranty-protect,
+    .flwarranty-decline {
+      min-height: 45px;
+      font-size: 12px;
+    }
+
+    .flwarranty-mobile-terms {
+      display: block;
+      margin: 0 auto 0;
+      color: #9b6e42;
+      font-size: 10px;
+      line-height: 1.3;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .flwarranty-mobile-trust {
+      display: block;
+      margin-top: 13px;
+      padding-top: 13px;
+      border-top: 1px solid #eee5dc;
+      text-align: center;
+    }
+
+    .flwarranty-mobile-trust .flwarranty-brand-logo {
+      width: 52px;
+      height: 50px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+    }
+
+    .flwarranty-mobile-trust .flwarranty-trust-stars {
+      font-size: 17px;
+      letter-spacing: 3px;
+    }
+
+    .flwarranty-mobile-trust .flwarranty-trust-text {
+      margin-top: 6px;
+      font-size: 9px;
+    }
+  }
+</style>
