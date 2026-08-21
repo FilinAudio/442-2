@@ -453,7 +453,6 @@ mo.observe(document.documentElement, {
   childList: true,
   subtree: true
 });
-   mo.observe(document.documentElement,{childList:true,subtree:true});
 
   window.FilinMasterProductV3RegistryInteractions = Object.freeze({version:'1.0.0',apply:apply});
 })();
