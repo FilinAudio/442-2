@@ -870,47 +870,41 @@
     startAutoplay(root);
   }
 
-  function bindRoot(root){
-    if(!root) return;
+function bindRoot(root){
+  if(!root) return;
 
-    /*
-      Hard idempotency guard.
-
-      This protects against:
-      - external calls to .apply()
-      - repeated MutationObserver callbacks
-      - Tilda DOM mutations
-      - accidental re-entry from other scripts
-
-      Once interactions are applied to this root,
-      the function exits without rebinding listeners,
-      restarting autoplay or emitting another APPLIED log.
-    */
-    if(
-      root.getAttribute(
-        'data-filin-v3-registry-interactions'
-      )==='1.0.0'
-    ){
-      return;
-    }
-
-    installStyle();
-    bindLightbox(root);
-    bindAutoplay(root);
-
-    root.setAttribute(
-      'data-filin-v3-registry-interactions',
-      '1.0.0'
-    );
-
-    console.info(
-      '[Master Product V3] INTERACTIONS V1 APPLIED',
-      {
-        galleryImages:getImages(root).length,
-        autoplayMs:AUTOPLAY_MS
-      }
-    );
+  if(
+    root.getAttribute(
+      'data-filin-v3-registry-interactions'
+    )==='1.0.0'
+  ){
+    return;
   }
+
+  /*
+    LOCK FIRST.
+
+    MutationObserver can fire again while the current
+    bind operation is still running. The root must be
+    marked as initialized BEFORE any DOM/listener work.
+  */
+  root.setAttribute(
+    'data-filin-v3-registry-interactions',
+    '1.0.0'
+  );
+
+  installStyle();
+  bindLightbox(root);
+  bindAutoplay(root);
+
+  console.info(
+    '[Master Product V3] INTERACTIONS V1 APPLIED',
+    {
+      galleryImages:getImages(root).length,
+      autoplayMs:AUTOPLAY_MS
+    }
+  );
+}
 
   /*
     Public apply() must ALWAYS go through safeApply().
