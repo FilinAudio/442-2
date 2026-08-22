@@ -252,7 +252,21 @@
       if(profile.__legacyBlurbNode){
         profile.__legacyBlurbNode.style.setProperty('display','none','important');
       }
+api.profiles[profile.slug] = profile;
+      api.apply();
 
+      if(profile.__legacyBlurbNode){
+        profile.__legacyBlurbNode.style.setProperty('display','none','important');
+      }
+
+      /* --- ДОБАВЛЕНО: Полностью скрываем старый блок Tilda --- */
+      var legacyRec = root.closest('.t-rec, [id^="rec"]');
+      if (legacyRec) {
+        legacyRec.style.setProperty('display', 'none', 'important');
+      }
+      /* ------------------------------------------------------- */
+
+      loadOne(CLEAN_COMMERCE);
       loadOne(CLEAN_COMMERCE);
 
       console.info('[Filin Auto-Bridge] APPLIED', {
