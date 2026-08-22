@@ -156,7 +156,7 @@
     setTimeout(function () { restoreLegacy('таймаут ' + FALLBACK_MS + ' мс'); }, FALLBACK_MS);
   }
 
-  window.FilinProductLoader = { version: '1.0.0', boot: boot };
+  window.FilinProductLoader = { version: '1.0.1', boot: boot };
 
   /* Если generated/filin-routes.js успел выполниться раньше загрузчика */
   if (window.__FILIN_ROUTES__) boot(window.__FILIN_ROUTES__);
