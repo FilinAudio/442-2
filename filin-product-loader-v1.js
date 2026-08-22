@@ -15,7 +15,7 @@
 
   /* ==== НАСТРОЙКИ ==================================================== */
 
-  var CDN = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@v1.0.0/'; // пиньте ТЕГ, не @main
+  var CDN = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@v1.0.1/'; // пиньте ТЕГ, не @main
 
   /* Порядок обязателен: каталог до ядра — из него берутся цены
      Perfect Matches и нижний recommendation-скроллер. */
