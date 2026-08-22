@@ -422,7 +422,7 @@ if [[ -z "$DRY" ]]; then
   echo "[7/7] Коммитю, тагирую и пушу..."
   git add tools/ generated/ filin-product-loader-v1.js HEAD-snippet.html
   git commit -m "Build: Extract product profiles - Golden Standard migration" --quiet
-  git tag -f v1.0.3 --quiet
+  git tag -f v1.0.3
   git push origin main --force --quiet 2>&1 | grep -v "^To https"
   git push origin v1.0.3 --force --quiet 2>&1 | grep -v "^To https"
   echo "✓ Push завершён"
