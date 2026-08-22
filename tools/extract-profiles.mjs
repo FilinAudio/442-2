@@ -1,38 +1,16 @@
 #!/usr/bin/env node
-/* ============================================================
-   FILIN LABS — BUILD-TIME PROFILE EXTRACTOR
-   Обходит опубликованные страницы товаров, разбирает HTML
-   и сохраняет готовые профили в репозиторий.
-
-   Ничего не парсится в браузере покупателя.
-
-   Запуск:
-     npm i cheerio
-     node tools/extract-profiles.mjs            # все товары из sitemap
-     node tools/extract-profiles.mjs --only demograf_clio_speakers
-     node tools/extract-profiles.mjs --dry      # только отчёт, без записи
-
-   На выходе (папка generated/):
-     legacy-hide.css            — прячет легаси-записи по ТОЧНЫМ id
-     filin-routes.js            — список слагов для загрузчика
-     profiles/<slug>.js         — профиль товара
-     report.json                — что нашлось, что нет
-   ============================================================ */
-
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as cheerio from 'cheerio';
 
 const ORIGIN      = 'https://filinlabs.com';
 const OUT         = 'generated';
-const OVERRIDES   = 'overrides';        // ручные правки, кладутся поверх извлечённого
+const OVERRIDES   = 'overrides';
 const CONCURRENCY = 4;
 
 const argv = process.argv.slice(2);
 const DRY  = argv.includes('--dry');
 const ONLY = (() => { const i = argv.indexOf('--only'); return i >= 0 ? argv[i + 1] : null; })();
-
-/* ---------- утилиты ---------------------------------------- */
 
 const norm = v => String(v ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
 const num  = v => { const n = Number(String(v ?? '').replace(/[^\d.]/g, '')); return Number.isFinite(n) ? n : 0; };
@@ -60,8 +38,6 @@ async function pool(items, worker) {
   return out;
 }
 
-/* ---------- список страниц --------------------------------- */
-
 async function urlList() {
   try {
     const manual = await fs.readFile('tools/product-urls.txt', 'utf8');
@@ -85,12 +61,10 @@ async function urlList() {
   return [...seen];
 }
 
-/* ---------- картинки --------------------------------------- */
-
 const BAD_URL = [
-  /\/-\/(resize|empty|format|preview)\//i,   // тильдовские превью и 20px-плейсхолдеры
-  /^https?:\/\/thb\.tildacdn\.com\//i,       // хост миниатюр
-  /\.svg(\?|$)/i,                            // иконки блоков курации
+  /\/-\/(resize|empty|format|preview)\//i,
+  /^https?:\/\/thb\.tildacdn\.com\//i,
+  /\.svg(\?|$)/i,
   /(favicon|tildacopy|logo|icon[-_]|spacer|blank\.gif|pixel)/i
 ];
 
@@ -108,98 +82,29 @@ function absolute(raw) {
 }
 
 function collectImages($, nodes) {
-  const seen = new Set();
-  const out = [];
-
-  const IMG_RE =
-    /https:\/\/static\.tildacdn\.com\/[^"'\\\s)>]+?\.(?:jpe?g|png|webp|avif)/gi;
-
-  function add(raw) {
-    if (!raw) return;
-
-    let s = String(raw)
-      .replace(/&quot;/g, '"')
-      .replace(/\\u002f/gi, '/')
-      .replace(/\\\//g, '/')
-      .trim();
-
-    const u = absolute(s);
-
+  const seen = new Set(), out = [];
+  const add = raw => {
+    const u = absolute(raw);
     if (!usableImage(u)) return;
-
     const key = u.split('?')[0];
-
     if (seen.has(key)) return;
-
     seen.add(key);
     out.push(u);
-  }
-
-
+  };
   for (const node of nodes) {
-
     if (!node) continue;
-
-    const $node = $(node);
-
-
-    // обычные картинки
-    $node.find('img,[data-original],[data-content-cover-bg],[style*="background"]').each((_, el) => {
-
+    $(node).find('img,[data-original],[data-content-cover-bg],[style*="background"]').each((_, el) => {
       const $el = $(el);
-
       add($el.attr('data-original'));
       add($el.attr('data-content-cover-bg'));
-      add($el.attr('src'));
-
       const style = $el.attr('style') || '';
       const m = /url\((['"]?)([^'")]+)\1\)/i.exec(style);
-
       if (m) add(m[2]);
-
+      if (el.tagName === 'img') add($el.attr('src'));
     });
-
-
-    // Tilda Zero Gallery / T396
-    $node.find('[data-field-imgs-value]').each((_, el) => {
-
-      let raw = $(el).attr('data-field-imgs-value') || '';
-
-      raw = raw
-        .replace(/&quot;/g, '"')
-        .replace(/\\u002f/gi, '/')
-        .replace(/\\\//g, '/');
-
-
-      let m;
-
-      while ((m = IMG_RE.exec(raw))) {
-        add(m[0]);
-      }
-
-      IMG_RE.lastIndex = 0;
-
-    });
-
-
-    // запасной поиск по HTML
-    const html = $node.html() || '';
-
-    let m;
-
-    while ((m = IMG_RE.exec(html))) {
-      add(m[0]);
-    }
-
-    IMG_RE.lastIndex = 0;
-
   }
-
-
   return out;
 }
-
-/* ---------- курация ---------------------------------------- */
 
 const LABELS = [
   ['Category & Budget Tier', /(?:CATHEGORY|CATEGORY)\s*&\s*BUDGET\s*TIER/i],
@@ -231,8 +136,6 @@ function parseCuration(text) {
   return out.length >= 3 ? out : null;
 }
 
-/* ---------- разбор одной страницы -------------------------- */
-
 function extract(html, url) {
   const $ = cheerio.load(html);
   const slug = slugOf(url);
@@ -245,9 +148,9 @@ function extract(html, url) {
     ($(el).find('.js-product-price').length || $(el).find('.js-product-name').length);
 
   const productIndex = records.findIndex(r => $(r).find('.js-product').filter((_, p) => isProductRoot(p)).length);
-  if (productIndex < 0) return null;                      // не карточка товара
+  if (productIndex < 0) return null;
 
-  const productRec  = records[productIndex];
+  const productRec   = records[productIndex];
   const productRoot = $(productRec).find('.js-product').filter((_, p) => isProductRoot(p)).first();
 
   const heroIndex = records.findIndex(r => $(r).find('.t-cover').length);
@@ -255,21 +158,18 @@ function extract(html, url) {
   const zoneStart = heroIndex >= 0 ? heroIndex + 1 : 0;
   const zone      = zoneStart < productIndex ? records.slice(zoneStart, productIndex) : [];
 
-  /* ---- имя и цена ---- */
   const rawName = norm($(productRoot).find('.js-product-name').first().text())
     .replace(/\s*\(Standard Edition\)\s*$/i, '')
     .replace(/\s*\[[^\]]*\]\s*$/, '');
 
   const price = num($(productRoot).find('.js-product-price').first().text());
 
-  /* ---- обложка ---- */
   const heroH1    = heroRec ? norm($(heroRec).find('.t184__title, h1').first().text()) : '';
   const heroDescr = heroRec ? norm($(heroRec).find('.t184__descr').first().text())     : '';
   const heroBg    = heroRec
     ? absolute($(heroRec).find('.t-cover__carrier').first().attr('data-content-cover-bg'))
     : '';
 
-  /* ---- зона: курация, куратор, описание ---- */
   let curation = null, curatorText = '', curatorId = '', overviewHtml = '', overviewTitle = '';
 
   for (const rec of zone) {
@@ -283,7 +183,7 @@ function extract(html, url) {
     if (!curatorText && /^Handcrafted by/i.test(text) && text.length < 300) {
       curatorText = text;
       curatorId = $(rec).attr('id') || '';
-      continue;                                            // эту запись НЕ прячем
+      continue;
     }
 
     if (!overviewTitle) {
@@ -297,10 +197,7 @@ function extract(html, url) {
     });
   }
 
-  /* ---- картинки ---- */
   const images = collectImages($, [heroRec, ...zone, productRec]);
-
-  /* ---- что прятать: точные id ---- */
   const hideIds = [...zone, productRec]
     .map(r => $(r).attr('id'))
     .filter(id => id && id !== curatorId);
@@ -312,13 +209,12 @@ function extract(html, url) {
     url,
     hideIds,
     warnings: [
-      heroIndex < 0            ? 'нет обложки (.t-cover) — зона определена от начала страницы' : null,
-      !images.length           ? 'не найдено ни одной картинки' : null,
-      !heroBg                  ? 'не найден фон обложки' : null,
-      !curation                ? 'нет блока из 7 карточек курации' : null,
+      heroIndex < 0            ? 'нет обложки (.t-cover)' : null,
+      !images.length           ? 'не найдено картинок' : null,
+      !heroBg                  ? 'нет фона обложки' : null,
+      !curation                ? 'нет 7 карточек курации' : null,
       !curatorText             ? 'нет строки куратора' : null,
       !price                   ? 'цена не определена' : null,
-      !$(productRoot).find('.perfect-matches-block').length ? 'нет Perfect Matches' : null
     ].filter(Boolean),
 
     profile: {
@@ -348,7 +244,6 @@ function extract(html, url) {
         displayName: name,
         cartName: `${name} (Standard Edition)`,
         stickyTitle: name,
-        innerHTML: $(productRoot).html() || ''
       },
 
       golden: {
@@ -362,8 +257,6 @@ function extract(html, url) {
     }
   };
 }
-
-/* ---------- ручные правки ---------------------------------- */
 
 function deepMerge(base, patch) {
   if (Array.isArray(patch) || patch === null || typeof patch !== 'object') return patch;
@@ -385,34 +278,26 @@ async function applyOverride(result) {
   return result;
 }
 
-/* ---------- запись ----------------------------------------- */
-
 async function write(results) {
   await fs.mkdir(path.join(OUT, 'profiles'), { recursive: true });
 
   for (const r of results) {
     const body =
-      `/* СГЕНЕРИРОВАНО tools/extract-profiles.mjs — не править вручную.\n` +
-      `   Ручные правки: ${OVERRIDES}/${r.slug}.json */\n` +
+      `/* СГЕНЕРИРОВАНО tools/extract-profiles.mjs */\n` +
       `(window.FilinProfiles=window.FilinProfiles||{})` +
       `[${JSON.stringify(r.slug)}]=${JSON.stringify(r.profile)};\n`;
     await fs.writeFile(path.join(OUT, 'profiles', `${r.slug}.js`), body);
   }
 
-  /* Одна общая таблица: id записей Tilda уникальны в пределах проекта,
-     поэтому правило безопасно применять на всех страницах сразу.
-     Файл подключается <link>-ом в HEAD и блокирует отрисовку —
-     легаси-блоки не видно ни доли секунды. */
   const ids = [...new Set(results.flatMap(r => r.hideIds))].sort();
   const css =
-    `/* СГЕНЕРИРОВАНО. Прячет легаси-записи ${results.length} карточек товара.\n` +
-    `   html.filin-legacy-restore возвращает их, если golden не собрался. */\n` +
+    `/* СГЕНЕРИРОВАНО */\n` +
     `html:not(.filin-legacy-restore) :is(\n  ${ids.map(i => '#' + i).join(',\n  ')}\n){\n` +
     `  display:none!important;\n}\n`;
   await fs.writeFile(path.join(OUT, 'legacy-hide.css'), css);
 
   const routes =
-    `/* СГЕНЕРИРОВАНО. Список карточек товара для загрузчика. */\n` +
+    `/* СГЕНЕРИРОВАНО */\n` +
     `(window.FilinProductLoader&&window.FilinProductLoader.boot||function(x){window.__FILIN_ROUTES__=x})(\n` +
     JSON.stringify({ slugs: results.map(r => r.slug).sort() }, null, 1) + `);\n`;
   await fs.writeFile(path.join(OUT, 'filin-routes.js'), routes);
@@ -422,14 +307,11 @@ async function write(results) {
       slug, url, overridden: !!overridden, warnings,
       price: profile.commerce.basePrice,
       images: profile.overview.galleryImages.length,
-      curation: profile.curation.length,
-      hidden: undefined
+      curation: profile.curation.length
     })), null, 2));
 
   console.log(`\nЗаписано: ${results.length} профилей, ${ids.length} id в legacy-hide.css`);
 }
-
-/* ---------- main ------------------------------------------- */
 
 const urls = (await urlList()).filter(u => !ONLY || slugOf(u) === ONLY);
 console.log(`Проверяю ${urls.length} страниц…\n`);
@@ -445,14 +327,11 @@ const failed  = raw.filter(r => r && r.error);
 
 for (const r of results) {
   const flag = r.warnings.length ? '!' : ' ';
-  console.log(`${flag} ${r.slug.padEnd(52)} $${String(r.profile.commerce.basePrice).padEnd(6)} ` +
-              `img:${String(r.profile.overview.galleryImages.length).padEnd(3)} ` +
-              `cur:${String(r.profile.curation.length).padEnd(2)} ` +
-              `hide:${r.hideIds.length}`);
+  console.log(`${flag} ${r.slug.padEnd(50)} $${String(r.profile.commerce.basePrice).padEnd(6)} img:${String(r.profile.overview.galleryImages.length).padEnd(2)} cur:${String(r.profile.curation.length)}`);
   for (const w of r.warnings) console.log(`      └ ${w}`);
 }
 
-for (const f of failed) console.log(`x ${f.url} — ${f.error}`);
+for (const f of failed) console.log(`✗ ${f.url.split('/').pop() || '/'} — ${f.error}`);
 
 console.log(`\nКарточек товара: ${results.length}. Ошибок загрузки: ${failed.length}.`);
 
