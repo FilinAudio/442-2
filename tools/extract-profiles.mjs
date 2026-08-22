@@ -108,31 +108,94 @@ function absolute(raw) {
 }
 
 function collectImages($, nodes) {
-  const seen = new Set(), out = [];
+  const seen = new Set();
+  const out = [];
 
-  const add = raw => {
-    const u = absolute(raw);
+  const IMG_RE =
+    /https:\/\/static\.tildacdn\.com\/[^"'\\\s)>]+?\.(?:jpe?g|png|webp|avif)/gi;
+
+  function add(raw) {
+    if (!raw) return;
+
+    let s = String(raw)
+      .replace(/&quot;/g, '"')
+      .replace(/\\u002f/gi, '/')
+      .replace(/\\\//g, '/')
+      .trim();
+
+    const u = absolute(s);
+
     if (!usableImage(u)) return;
+
     const key = u.split('?')[0];
+
     if (seen.has(key)) return;
+
     seen.add(key);
     out.push(u);
-  };
+  }
+
 
   for (const node of nodes) {
+
     if (!node) continue;
-    $(node).find('img,[data-original],[data-content-cover-bg],[style*="background"]').each((_, el) => {
+
+    const $node = $(node);
+
+
+    // обычные картинки
+    $node.find('img,[data-original],[data-content-cover-bg],[style*="background"]').each((_, el) => {
+
       const $el = $(el);
-      /* data-original идёт ПЕРВЫМ: в нём полноразмерный файл,
-         в src на этот момент лежит 20-пиксельный плейсхолдер */
+
       add($el.attr('data-original'));
       add($el.attr('data-content-cover-bg'));
+      add($el.attr('src'));
+
       const style = $el.attr('style') || '';
       const m = /url\((['"]?)([^'")]+)\1\)/i.exec(style);
+
       if (m) add(m[2]);
-      if (el.tagName === 'img') add($el.attr('src'));
+
     });
+
+
+    // Tilda Zero Gallery / T396
+    $node.find('[data-field-imgs-value]').each((_, el) => {
+
+      let raw = $(el).attr('data-field-imgs-value') || '';
+
+      raw = raw
+        .replace(/&quot;/g, '"')
+        .replace(/\\u002f/gi, '/')
+        .replace(/\\\//g, '/');
+
+
+      let m;
+
+      while ((m = IMG_RE.exec(raw))) {
+        add(m[0]);
+      }
+
+      IMG_RE.lastIndex = 0;
+
+    });
+
+
+    // запасной поиск по HTML
+    const html = $node.html() || '';
+
+    let m;
+
+    while ((m = IMG_RE.exec(html))) {
+      add(m[0]);
+    }
+
+    IMG_RE.lastIndex = 0;
+
   }
+
+
   return out;
 }
 
