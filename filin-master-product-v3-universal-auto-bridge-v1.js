@@ -1,26 +1,26 @@
 /* ============================================================
-   FILIN LABS — UNIVERSAL LEGACY → GOLDEN AUTO-BRIDGE V1
-   Один файл, ставится в Site HEAD ОДИН РАЗ.
-   Ничего не нужно менять на самих 91 страницах товаров.
+   FILIN LABS — UNIVERSAL LEGACY → GOLDEN AUTO-BRIDGE V2
+   Один файл, ставится в Site HEAD ОДИН РАЗ. Правки страниц не нужны.
 
-   Логика:
-   - находит legacy .js-product-блок товара на текущей странице
-   - если #product-data ещё нет (страница не мигрирована руками) —
-     вытаскивает name/price/innerHTML/картинки прямо из уже
-     существующей на странице разметки
-   - подгружает тот же golden-стек (catalog → core → commerce)
-   - регистрирует синтетический профиль и вызывает apply()
-   - golden-ядро само строит карточку и само прячет старый блок
+   V2 добавляет к V1:
+   - позиционное скрытие ВСЕХ legacy-записей между hero-обложкой
+     и .js-product (а не только "непосредственно предыдущей")
+   - автопарсинг блока из 7 категорий (Category & Budget Tier,
+     Tags & Features, Sonic Signature, Curator's Choice,
+     High Technologies, Synergy Match, Genres Accord) в золотые
+     карточки курации, если такой блок найден в legacy-зоне
+   - сбор описания (overview) из ВСЕХ параграфов legacy-зоны,
+     а не только одного соседнего блока
+   - куратора ("Handcrafted by...") не трогает: если ядро само
+     нашло и оформило такую строку внутри legacy-зоны — эта
+     конкретная запись НЕ прячется
    ============================================================ */
 (function(){
   'use strict';
 
-  if(window.__FILIN_UNIVERSAL_AUTO_BRIDGE_V1__) return;
-  window.__FILIN_UNIVERSAL_AUTO_BRIDGE_V1__ = true;
+  if(window.__FILIN_UNIVERSAL_AUTO_BRIDGE_V2__) return;
+  window.__FILIN_UNIVERSAL_AUTO_BRIDGE_V2__ = true;
 
-  /* Тот же зафиксированный стек, что уже подтверждён рабочим
-     на grand_tower_golden_test. Порядок обязателен: каталог
-     до ядра (нужен для Perfect Matches / нижнего scroller-а). */
   var STACK = [
     'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@f78a192778064f62e6c6bf45d5c338d9826d185d/filin-rich-product-catalog-v2-runtime.js',
     'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@e4de1ae708daa2966411d764f3d803af5b59ec17/filin-master-product-v3-3-2-golden-standard-runtime.js'
@@ -29,8 +29,7 @@
   var WISHLIST_BRIDGE = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@3d06611f1c1daff094db45a7659a13a6f3d31d88/filin-master-product-v3-wishlist-bridge-v4.js';
 
   /* Точечные ручные доработки для конкретных товаров (опционально).
-     Ключ — slug (путь без слэшей). Можно дополнять со временем,
-     без правки страниц — только этот файл. */
+     Ключ — slug. Перекрывают автоматически найденное. */
   var OVERRIDES = {
     // 'demograf_clio_speakers': {
     //   curator: 'Handcrafted by Demograf Audio Equipment...',
@@ -38,7 +37,7 @@
     // }
   };
 
-  function norm(v){ return String(v==null?'':v).replace(/\s+/g,' ').trim(); }
+  function norm(v){ return String(v==null?'':v).replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim(); }
   function num(v){ var n = Number(String(v||'').replace(/[^\d.]/g,'')); return Number.isFinite(n) ? n : 0; }
   function slug(){ return norm(location.pathname).replace(/^\/+|\/+$/g,''); }
 
@@ -64,7 +63,75 @@
   }
 
   /* ------------------------------------------------------------
-     ИЗВЛЕЧЕНИЕ ДАННЫХ ИЗ УЖЕ СУЩЕСТВУЮЩЕЙ РАЗМЕТКИ
+     ПОЗИЦИОННАЯ LEGACY-ЗОНА: всё между hero и .js-product
+     ------------------------------------------------------------ */
+  function allRecordsInOrder(){
+    return Array.prototype.slice.call(document.querySelectorAll('#allrecords .t-rec'));
+  }
+
+  function findHeroIndex(records){
+    for(var i=0;i<records.length;i++){
+      if(records[i].querySelector('.t-cover')) return i;
+    }
+    return -1;
+  }
+
+  function legacyZone(productRoot){
+    var records = allRecordsInOrder();
+    var productRec = productRoot.closest('.t-rec') || productRoot;
+    var productIndex = records.indexOf(productRec);
+    if(productIndex < 0) return { records: [], productRec: productRec };
+
+    var heroIndex = findHeroIndex(records);
+    var startIndex = heroIndex >= 0 ? heroIndex + 1 : 0;
+
+    if(startIndex >= productIndex) return { records: [], productRec: productRec };
+
+    return {
+      records: records.slice(startIndex, productIndex),
+      productRec: productRec
+    };
+  }
+
+  /* ------------------------------------------------------------
+     ПАРСИНГ БЛОКА 7 КАТЕГОРИЙ ИЗ ТЕКСТА (если он есть)
+     ------------------------------------------------------------ */
+  var CURATION_LABELS = [
+    { title:'Category & Budget Tier', re:/(?:CATHEGORY|CATEGORY)\s*&\s*BUDGET\s*TIER/i },
+    { title:'Tags & Features',        re:/TAGS?\s*&\s*FEATURES/i },
+    { title:'Sonic Signature',        re:/SONIC\s*SIGNATURE/i },
+    { title:"Curator's Choice",       re:/CURATOR[’']?S\s*CHOICE/i },
+    { title:'High Technologies',      re:/HIGH\s*TECHNOLOGIES/i },
+    { title:'Synergy Match',          re:/SYNERGY\s*MATCH/i },
+    { title:'Genres Accord',          re:/GENRES?\s*ACCORD/i }
+  ];
+
+  function parseCurationFromText(text){
+    text = norm(text);
+    var hits = [];
+
+    CURATION_LABELS.forEach(function(l){
+      var m = l.re.exec(text);
+      if(m) hits.push({ title:l.title, index:m.index, len:m[0].length });
+    });
+
+    if(hits.length < 3) return null;
+
+    hits.sort(function(a,b){ return a.index - b.index; });
+
+    var results = [];
+    for(var i=0;i<hits.length;i++){
+      var start = hits[i].index + hits[i].len;
+      var end = (i+1 < hits.length) ? hits[i+1].index : text.length;
+      var body = text.slice(start, end).trim().replace(/^[^\w(]+/, '');
+      if(body) results.push({ title: hits[i].title, html: '<p>'+body+'</p>' });
+    }
+
+    return results.length >= 3 ? results : null;
+  }
+
+  /* ------------------------------------------------------------
+     ИЗВЛЕЧЕНИЕ ОСНОВНЫХ ДАННЫХ (имя/цена/картинки)
      ------------------------------------------------------------ */
   function legacyTitle(root){
     var nameEl = root.querySelector('.js-product-name');
@@ -82,21 +149,6 @@
   function legacyPrice(root){
     var priceEl = root.querySelector('.js-product-price');
     return priceEl ? num(priceEl.textContent) : 0;
-  }
-
-  function leadingBlurb(root){
-    /* Небольшой маркетинговый блок над .js-product, если он есть
-       (как у Clio .product-wrapper .label-def) — переносим его
-       текст в overview, а сам блок прячем, чтобы не дублировался. */
-    var rec = root.closest('.t-rec,[id^="rec"]');
-    var prevRec = rec && rec.previousElementSibling;
-    if(!prevRec) return {html:'', node:null};
-
-    var paras = Array.prototype.slice.call(prevRec.querySelectorAll('p'));
-    if(!paras.length || prevRec.querySelector('.tabs-wrapper,.js-product-btn')) return {html:'', node:null};
-
-    var html = paras.map(function(p){ return '<p>'+p.innerHTML+'</p>'; }).join('');
-    return { html: html, node: prevRec };
   }
 
   function legacyGalleryImages(){
@@ -126,15 +178,37 @@
   }
 
   /* ------------------------------------------------------------
-     СБОРКА СИНТЕТИЧЕСКОГО ПРОФИЛЯ
+     СБОРКА ПРОФИЛЯ + ИЗВЛЕЧЕНИЕ ДАННЫХ ИЗ LEGACY-ЗОНЫ
      ------------------------------------------------------------ */
-  function buildSyntheticProfile(root){
+  function extractFromZone(zoneRecords){
+    var curation = null;
+    var overviewHtml = '';
+
+    zoneRecords.forEach(function(rec){
+      var text = norm(rec.textContent);
+
+      if(!curation){
+        var parsed = parseCurationFromText(text);
+        if(parsed){ curation = parsed; return; }
+      }
+
+      if(!rec.querySelector('.tabs-wrapper,.js-product-btn,.js-product,.t-cover')){
+        var paras = Array.prototype.slice.call(rec.querySelectorAll('p'));
+        if(paras.length){
+          overviewHtml += paras.map(function(p){ return '<p>'+p.innerHTML+'</p>'; }).join('');
+        }
+      }
+    });
+
+    return { curation: curation, overviewHtml: overviewHtml };
+  }
+
+  function buildSyntheticProfile(root, zoneData){
     var s = slug();
     var override = OVERRIDES[s] || {};
 
     var name = legacyTitle(root);
     var price = legacyPrice(root);
-    var blurb = leadingBlurb(root);
     var images = legacyGalleryImages();
 
     return {
@@ -146,7 +220,7 @@
 
       hero: {
         staticH1: name,
-        description: norm(blurb.html.replace(/<[^>]+>/g,' ')).slice(0, 220),
+        description: norm((zoneData.overviewHtml||'').replace(/<[^>]+>/g,' ')).slice(0, 220),
         background: images[0] || ''
       },
 
@@ -154,11 +228,11 @@
 
       overview: {
         title: name,
-        html: blurb.html,
+        html: zoneData.overviewHtml || '',
         galleryImages: images
       },
 
-      curation: override.curation || [],
+      curation: override.curation || zoneData.curation || [],
 
       commerce: {
         basePrice: price,
@@ -175,10 +249,24 @@
         resultLabel: 'Ultimate Synergy'
       },
 
-      reviewsKey: s,
-
-      __legacyBlurbNode: blurb.node
+      reviewsKey: s
     };
+  }
+
+  /* ------------------------------------------------------------
+     СКРЫТИЕ LEGACY-ЗОНЫ (после apply(), чтобы не задеть
+     запись, которую ядро само нашло и оформило как куратора)
+     ------------------------------------------------------------ */
+  function hideZone(zoneRecords){
+    var hidden = 0;
+    zoneRecords.forEach(function(rec){
+      if(rec.classList.contains('fp-v3-curator-record')) return; // ядро уже оформило это как куратор-плашку
+      rec.style.setProperty('display','none','important');
+      rec.style.setProperty('visibility','hidden','important');
+      rec.dataset.filinAutoBridgeHidden = '1';
+      hidden++;
+    });
+    return hidden;
   }
 
   /* ------------------------------------------------------------
@@ -219,10 +307,10 @@
     var root = legacyProductRoot();
     if(!root) return; // не товарная страница
 
-    var profile = buildSyntheticProfile(root);
+    var zone = legacyZone(root);
+    var zoneData = extractFromZone(zone.records);
+    var profile = buildSyntheticProfile(root, zoneData);
 
-    /* seed для совместимости со sticky-header/cart-bridge, которые
-       читают #product-data напрямую */
     if(!document.getElementById('product-data')){
       var seed = document.createElement('script');
       seed.type = 'application/json';
@@ -249,23 +337,16 @@
       api.profiles[profile.slug] = profile;
       api.apply();
 
-      if(profile.__legacyBlurbNode){
-        profile.__legacyBlurbNode.style.setProperty('display','none','important');
-      }
-
-      /* --- ДОБАВЛЕНО: Полностью скрываем старый блок Tilda --- */
-      var legacyRec = root.closest('.t-rec, [id^="rec"]');
-      if (legacyRec) {
-        legacyRec.style.setProperty('display', 'none', 'important');
-      }
-      /* ------------------------------------------------------- */
+      var hidden = hideZone(zone.records);
 
       loadOne(CLEAN_COMMERCE);
 
-      console.info('[Filin Auto-Bridge] APPLIED', {
+      console.info('[Filin Auto-Bridge V2] APPLIED', {
         slug: profile.slug,
         price: profile.commerce.basePrice,
-        images: profile.overview.galleryImages.length
+        images: profile.overview.galleryImages.length,
+        zoneRecordsHidden: hidden,
+        curationAutoParsed: !!(zoneData.curation && zoneData.curation.length)
       });
     });
 
