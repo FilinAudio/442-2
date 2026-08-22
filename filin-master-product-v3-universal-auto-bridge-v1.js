@@ -1,25 +1,15 @@
 /* ============================================================
-   FILIN LABS — UNIVERSAL LEGACY → GOLDEN AUTO-BRIDGE V2
-   Один файл, ставится в Site HEAD ОДИН РАЗ. Правки страниц не нужны.
-
-   V2 добавляет к V1:
-   - позиционное скрытие ВСЕХ legacy-записей между hero-обложкой
-     и .js-product (а не только "непосредственно предыдущей")
-   - автопарсинг блока из 7 категорий (Category & Budget Tier,
-     Tags & Features, Sonic Signature, Curator's Choice,
-     High Technologies, Synergy Match, Genres Accord) в золотые
-     карточки курации, если такой блок найден в legacy-зоне
-   - сбор описания (overview) из ВСЕХ параграфов legacy-зоны,
-     а не только одного соседнего блока
-   - куратора ("Handcrafted by...") не трогает: если ядро само
-     нашло и оформило такую строку внутри legacy-зоны — эта
-     конкретная запись НЕ прячется
+   FILIN LABS — UNIVERSAL LEGACY → GOLDEN AUTO-BRIDGE V3
+   V2 + надёжное извлечение картинок галереи (без зависимости
+   от текущей раскладки/layout, которая на момент выполнения
+   скрипта у Tilda-галерей часто равна нулю до инициализации
+   слайдера — именно из-за этого раньше было images:0).
    ============================================================ */
 (function(){
   'use strict';
 
-  if(window.__FILIN_UNIVERSAL_AUTO_BRIDGE_V2__) return;
-  window.__FILIN_UNIVERSAL_AUTO_BRIDGE_V2__ = true;
+  if(window.__FILIN_UNIVERSAL_AUTO_BRIDGE_V3__) return;
+  window.__FILIN_UNIVERSAL_AUTO_BRIDGE_V3__ = true;
 
   var STACK = [
     'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@f78a192778064f62e6c6bf45d5c338d9826d185d/filin-rich-product-catalog-v2-runtime.js',
@@ -28,22 +18,14 @@
   var CLEAN_COMMERCE = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@44c895edcbef44d44014e494781c0046bd969b67/filin-master-product-v3-clean-commerce-v2.js';
   var WISHLIST_BRIDGE = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@3d06611f1c1daff094db45a7659a13a6f3d31d88/filin-master-product-v3-wishlist-bridge-v4.js';
 
-  /* Точечные ручные доработки для конкретных товаров (опционально).
-     Ключ — slug. Перекрывают автоматически найденное. */
   var OVERRIDES = {
-    // 'demograf_clio_speakers': {
-    //   curator: 'Handcrafted by Demograf Audio Equipment...',
-    //   curation: [ {title:'...', html:'...'}, ... ]
-    // }
+    // 'demograf_clio_speakers': { curator:'...', curation:[...] }
   };
 
   function norm(v){ return String(v==null?'':v).replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim(); }
   function num(v){ var n = Number(String(v||'').replace(/[^\d.]/g,'')); return Number.isFinite(n) ? n : 0; }
   function slug(){ return norm(location.pathname).replace(/^\/+|\/+$/g,''); }
 
-  /* ------------------------------------------------------------
-     ДЕТЕКТОР: это товарная (legacy) страница?
-     ------------------------------------------------------------ */
   function legacyProductRoot(){
     var candidates = document.querySelectorAll('.js-product');
     for(var i=0;i<candidates.length;i++){
@@ -62,9 +44,6 @@
     return !!document.getElementById('product-data');
   }
 
-  /* ------------------------------------------------------------
-     ПОЗИЦИОННАЯ LEGACY-ЗОНА: всё между hero и .js-product
-     ------------------------------------------------------------ */
   function allRecordsInOrder(){
     return Array.prototype.slice.call(document.querySelectorAll('#allrecords .t-rec'));
   }
@@ -80,21 +59,20 @@
     var records = allRecordsInOrder();
     var productRec = productRoot.closest('.t-rec') || productRoot;
     var productIndex = records.indexOf(productRec);
-    if(productIndex < 0) return { records: [], productRec: productRec };
+    if(productIndex < 0) return { records: [], heroRecord: null, productRec: productRec };
 
     var heroIndex = findHeroIndex(records);
     var startIndex = heroIndex >= 0 ? heroIndex + 1 : 0;
 
-    if(startIndex >= productIndex) return { records: [], productRec: productRec };
-
     return {
-      records: records.slice(startIndex, productIndex),
+      records: startIndex < productIndex ? records.slice(startIndex, productIndex) : [],
+      heroRecord: heroIndex >= 0 ? records[heroIndex] : null,
       productRec: productRec
     };
   }
 
   /* ------------------------------------------------------------
-     ПАРСИНГ БЛОКА 7 КАТЕГОРИЙ ИЗ ТЕКСТА (если он есть)
+     ПАРСИНГ БЛОКА 7 КАТЕГОРИЙ
      ------------------------------------------------------------ */
   var CURATION_LABELS = [
     { title:'Category & Budget Tier', re:/(?:CATHEGORY|CATEGORY)\s*&\s*BUDGET\s*TIER/i },
@@ -109,16 +87,12 @@
   function parseCurationFromText(text){
     text = norm(text);
     var hits = [];
-
     CURATION_LABELS.forEach(function(l){
       var m = l.re.exec(text);
       if(m) hits.push({ title:l.title, index:m.index, len:m[0].length });
     });
-
     if(hits.length < 3) return null;
-
     hits.sort(function(a,b){ return a.index - b.index; });
-
     var results = [];
     for(var i=0;i<hits.length;i++){
       var start = hits[i].index + hits[i].len;
@@ -126,23 +100,17 @@
       var body = text.slice(start, end).trim().replace(/^[^\w(]+/, '');
       if(body) results.push({ title: hits[i].title, html: '<p>'+body+'</p>' });
     }
-
     return results.length >= 3 ? results : null;
   }
 
-  /* ------------------------------------------------------------
-     ИЗВЛЕЧЕНИЕ ОСНОВНЫХ ДАННЫХ (имя/цена/картинки)
-     ------------------------------------------------------------ */
   function legacyTitle(root){
     var nameEl = root.querySelector('.js-product-name');
     var raw = nameEl ? nameEl.textContent : '';
     raw = norm(raw).replace(/\s*\(Standard Edition\)\s*$/i,'').replace(/\s*\[[^\]]*\]\s*$/,'');
     if(raw) return raw;
-
     var h1 = Array.prototype.slice.call(document.querySelectorAll('h1'))
       .find(function(h){ return !h.closest('#t-header,.t-header,#t-footer') && norm(h.textContent); });
     if(h1) return norm(h1.textContent);
-
     return norm(document.title).replace(/\s*[|–—]\s*Filin Labs.*$/i,'') || 'Filin Labs Product';
   }
 
@@ -151,34 +119,66 @@
     return priceEl ? num(priceEl.textContent) : 0;
   }
 
-  function legacyGalleryImages(){
+  /* ------------------------------------------------------------
+     НАДЁЖНОЕ ИЗВЛЕЧЕНИЕ КАРТИНОК — БЕЗ ОПОРЫ НА LAYOUT/RECT.
+     Читаем атрибуты и style напрямую, как в profiles-registry-v1.js,
+     где это уже проверенно работает для гидратации галерей.
+     ------------------------------------------------------------ */
+  var IMG_ATTRS = [
+    'data-original','data-src','data-lazy-src','data-img-zoom-url',
+    'data-bg','data-bg-img','data-original-src','src',
+    'data-gallery-img','data-zoom-target','data-content-cover-bg'
+  ];
+
+  function absUrl(u){
+    try{ return new URL(u, location.origin).href; }catch(e){ return ''; }
+  }
+
+  function validImageUrl(u){
+    if(!u) return false;
+    if(
+      !/^https?:\/\/(?:static|thb)\.tildacdn\.com\//i.test(u) &&
+      !/\.(?:jpe?g|png|webp|gif|avif)(?:[?#]|$)/i.test(u)
+    ) return false;
+    if(/(favicon|logo|icon-|placeholder|blank\.gif|spacer\.gif|pixel\.gif)/i.test(u)) return false;
+    return true;
+  }
+
+  function pushImage(list, seen, raw){
+    var u = absUrl(String(raw||'').trim().split(/\s+/)[0]);
+    if(!validImageUrl(u)) return;
+    var key = u.split('?')[0];
+    if(seen[key]) return;
+    seen[key] = 1;
+    list.push(u);
+  }
+
+  function legacyGalleryImages(scopeNodes){
     var seen = {}; var out = [];
-    document.querySelectorAll('img').forEach(function(img){
-      if(img.closest('#t-header,.t-header,#t-footer,.t-footer')) return;
 
-      var src = img.currentSrc || img.getAttribute('data-original') ||
-                img.getAttribute('data-src') || img.src || '';
-      if(!src) return;
+    scopeNodes.forEach(function(root){
+      if(!root) return;
 
-      var abs = '';
-      try{ abs = new URL(src, location.origin).href; }catch(e){ return; }
+      var all = root.querySelectorAll('img,[style*="background"],[data-original],[data-src]');
+      Array.prototype.forEach.call(all, function(el){
+        IMG_ATTRS.forEach(function(attr){
+          var raw = el.getAttribute && el.getAttribute(attr);
+          if(raw) pushImage(out, seen, raw);
+        });
 
-      if(!/tildacdn\.com\//i.test(abs)) return;
-      if(/(favicon|logo|icon-|placeholder|blank\.gif)/i.test(abs)) return;
-
-      var rect = img.getBoundingClientRect ? img.getBoundingClientRect() : {width:999};
-      if(rect.width && rect.width < 60) return;
-
-      var key = abs.split('?')[0];
-      if(seen[key]) return;
-      seen[key] = 1;
-      out.push(abs);
+        var style = el.getAttribute && el.getAttribute('style');
+        if(style){
+          var m = /url\((['"]?)([^'")]+)\1\)/i.exec(style);
+          if(m) pushImage(out, seen, m[2]);
+        }
+      });
     });
+
     return out.slice(0, 14);
   }
 
   /* ------------------------------------------------------------
-     СБОРКА ПРОФИЛЯ + ИЗВЛЕЧЕНИЕ ДАННЫХ ИЗ LEGACY-ЗОНЫ
+     СБОРКА ПРОФИЛЯ
      ------------------------------------------------------------ */
   function extractFromZone(zoneRecords){
     var curation = null;
@@ -203,13 +203,14 @@
     return { curation: curation, overviewHtml: overviewHtml };
   }
 
-  function buildSyntheticProfile(root, zoneData){
+  function buildSyntheticProfile(root, zone, zoneData){
     var s = slug();
     var override = OVERRIDES[s] || {};
-
     var name = legacyTitle(root);
     var price = legacyPrice(root);
-    var images = legacyGalleryImages();
+
+    var scopeNodes = [zone.heroRecord].concat(zone.records, [root]);
+    var images = legacyGalleryImages(scopeNodes);
 
     return {
       schemaVersion: 2,
@@ -217,23 +218,18 @@
       id: s.replace(/_/g,'-'),
       category: '',
       currency: 'USD',
-
       hero: {
         staticH1: name,
         description: norm((zoneData.overviewHtml||'').replace(/<[^>]+>/g,' ')).slice(0, 220),
         background: images[0] || ''
       },
-
       curator: override.curator || '',
-
       overview: {
         title: name,
         html: zoneData.overviewHtml || '',
         galleryImages: images
       },
-
       curation: override.curation || zoneData.curation || [],
-
       commerce: {
         basePrice: price,
         displayName: name,
@@ -241,26 +237,20 @@
         stickyTitle: name,
         innerHTML: root.innerHTML
       },
-
       golden: {
         backLabel: "Back to the Filin's nest",
         backHref: '/',
         mobileHeroHeight: 860,
         resultLabel: 'Ultimate Synergy'
       },
-
       reviewsKey: s
     };
   }
 
-  /* ------------------------------------------------------------
-     СКРЫТИЕ LEGACY-ЗОНЫ (после apply(), чтобы не задеть
-     запись, которую ядро само нашло и оформило как куратора)
-     ------------------------------------------------------------ */
   function hideZone(zoneRecords){
     var hidden = 0;
     zoneRecords.forEach(function(rec){
-      if(rec.classList.contains('fp-v3-curator-record')) return; // ядро уже оформило это как куратор-плашку
+      if(rec.classList.contains('fp-v3-curator-record')) return;
       rec.style.setProperty('display','none','important');
       rec.style.setProperty('visibility','hidden','important');
       rec.dataset.filinAutoBridgeHidden = '1';
@@ -269,9 +259,6 @@
     return hidden;
   }
 
-  /* ------------------------------------------------------------
-     ЗАГРУЗКА СКРИПТОВ
-     ------------------------------------------------------------ */
   function already(src){
     return Array.prototype.some.call(document.scripts, function(sc){
       return sc.src && sc.src.split('?')[0] === src.split('?')[0];
@@ -298,18 +285,15 @@
     }, Promise.resolve());
   }
 
-  /* ------------------------------------------------------------
-     ГЛАВНЫЙ ЗАПУСК
-     ------------------------------------------------------------ */
   function run(){
-    if(alreadyMigrated()) return; // страница уже мигрирована вручную — не трогаем
+    if(alreadyMigrated()) return;
 
     var root = legacyProductRoot();
-    if(!root) return; // не товарная страница
+    if(!root) return;
 
     var zone = legacyZone(root);
     var zoneData = extractFromZone(zone.records);
-    var profile = buildSyntheticProfile(root, zoneData);
+    var profile = buildSyntheticProfile(root, zone, zoneData);
 
     if(!document.getElementById('product-data')){
       var seed = document.createElement('script');
@@ -341,7 +325,7 @@
 
       loadOne(CLEAN_COMMERCE);
 
-      console.info('[Filin Auto-Bridge V2] APPLIED', {
+      console.info('[Filin Auto-Bridge V3] APPLIED', {
         slug: profile.slug,
         price: profile.commerce.basePrice,
         images: profile.overview.galleryImages.length,
