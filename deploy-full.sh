@@ -31,7 +31,7 @@ echo ""
 echo "[1/7] Клонирую репо..."
 mkdir -p "$WORK_DIR"
 cd "$WORK_DIR"
-git clone --depth 1 "https://${GITHUB_TOKEN}@github.com/FilinAudio/442-2.git" repo
+git clone --depth 1 --filter=blob:none "https://${GITHUB_TOKEN}@github.com/FilinAudio/442-2.git" repo
 cd repo
 
 # ===== 2. GIT CONFIG =====
