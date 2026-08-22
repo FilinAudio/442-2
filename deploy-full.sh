@@ -29,6 +29,7 @@ echo ""
 
 # ===== 1. CLONE =====
 echo "[1/7] Клонирую репо..."
+git clone --depth 1 "https://${GITHUB_TOKEN}@github.com/FilinAudio/442-2.git" repo
 mkdir -p "$WORK_DIR"
 cd "$WORK_DIR"
 git clone "https://${GITHUB_TOKEN}@github.com/FilinAudio/442-2.git" repo 2>&1 | grep -v "^Cloning" | head -5
