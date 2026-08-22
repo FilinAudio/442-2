@@ -15,7 +15,18 @@
 
   /* ==== НАСТРОЙКИ ==================================================== */
 
-  var CDN = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@v1.0.1/'; // пиньте ТЕГ, не @main
+  /* Динамическое определение версии тега из src самого скрипта загрузчика */
+  var curScript = document.currentScript || (function () {
+    var scripts = document.getElementsByTagName('script');
+    for (var i = 0; i < scripts.length; i++) {
+      if (scripts[i].src && /filin-product-loader-v1\.js/.test(scripts[i].src)) {
+        return scripts[i];
+      }
+    }
+  })();
+
+  var TAG = (curScript && (curScript.src.match(/@([^/]+)/) || [])[1]) || 'v1.0.3';
+  var CDN = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@' + TAG + '/';
 
   /* Порядок обязателен: каталог до ядра — из него берутся цены
      Perfect Matches и нижний recommendation-скроллер. */
@@ -156,7 +167,7 @@
     setTimeout(function () { restoreLegacy('таймаут ' + FALLBACK_MS + ' мс'); }, FALLBACK_MS);
   }
 
-  window.FilinProductLoader = { version: '1.0.1', boot: boot };
+  window.FilinProductLoader = { version: TAG.replace(/^v/, ''), boot: boot };
 
   /* Если generated/filin-routes.js успел выполниться раньше загрузчика */
   if (window.__FILIN_ROUTES__) boot(window.__FILIN_ROUTES__);
