@@ -3,7 +3,7 @@
   'use strict';
   if (window.FilinProductLoader) return;
 
-  var CDN      = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@v1.1.2/';
+  var CDN      = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@v1.1.3/';
   var CATALOG  = 'filin-rich-product-catalog-v2-runtime.js';
   var CORE     = 'filin-master-product-v3-3-2-golden-standard-runtime.js';
   var COMMERCE = 'filin-master-product-v3-clean-commerce-v2.js';
@@ -94,6 +94,6 @@
     setTimeout(function () { restore('таймаут ' + FALLBACK_MS + ' мс'); }, FALLBACK_MS);
   }
 
-  window.FilinProductLoader = { version: '1.1.1', boot: boot };
+window.FilinProductLoader = { version: '1.1.3', boot: boot };
   if (window.__FILIN_ROUTES__) boot(window.__FILIN_ROUTES__);
 })();
