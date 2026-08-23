@@ -172,12 +172,29 @@ function extract(html, url, $) {
 
   let curation = null, curatorText = '', curatorId = '', overviewHtml = '', overviewTitle = '';
 
-  for (const rec of zone) {
-    const text = blockText($, $(rec));
-    if (!curation) {
-      const parsed = parseCuration(text);
-      if (parsed) { curation = parsed; continue; }
+ for (const rec of zone) {
+  let text = blockText($, $(rec));
+
+  text = text.replace(
+    /t_onReady\(function\(\).*?t491_init.*?\}\);\}\);/gs,
+    ''
+  );
+
+  text = text.replace(
+    /#rec\d+.*?(?=<|$)/gs,
+    ''
+  );
+
+  text = norm(text);
+
+  if (!curation) {
+    const parsed = parseCuration(text);
+    if (parsed) { 
+      curation = parsed; 
+      continue; 
     }
+  }
+
     if (!curatorText && /^Handcrafted by/i.test(text) && text.length < 300) {
       curatorText = text; curatorId = $(rec).attr('id') || ''; continue;
     }

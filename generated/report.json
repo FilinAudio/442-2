@@ -3,144 +3,120 @@
     "slug": "art_air_acoustic_speaker_cables",
     "url": "https://filinlabs.com/art_air_acoustic_speaker_cables",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1500,
     "images": 12,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "art_air_digital_cables",
     "url": "https://filinlabs.com/art_air_digital_cables",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 500,
     "images": 11,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "art_air_power_cables",
     "url": "https://filinlabs.com/art_air_power_cables",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1200,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "art_air_rca_phono_spdif_cables",
     "url": "https://filinlabs.com/art_air_rca_phono_spdif_cables",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 700,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "art_air_xlr_balanced_cables",
     "url": "https://filinlabs.com/art_air_xlr_balanced_cables",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 800,
     "images": 12,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "audioinstrument_axle_pc_streamer",
     "url": "https://filinlabs.com/audioinstrument_axle_pc_streamer",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1500,
     "images": 6,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "audioinstrument_dac_di_200_accuracy",
     "url": "https://filinlabs.com/audioinstrument_dac_di_200_accuracy",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1700,
     "images": 9,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "audioinstrument_power_speakers",
     "url": "https://filinlabs.com/audioinstrument_power_speakers",
     "overridden": false,
     "warnings": [
-      "нет строки куратора"
+      "нет 7 карточек курации"
     ],
     "price": 6500,
     "images": 11,
-    "curation": 7
+    "curation": 0
   },
   {
     "slug": "audioinstrument_sirius_kt150_tube_amplifier",
     "url": "https://filinlabs.com/audioinstrument_sirius_kt150_tube_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 4500,
     "images": 10,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "audioinstrument_sirius_kt66_push_pull_tube_amplifier",
     "url": "https://filinlabs.com/audioinstrument_sirius_kt66_push_pull_tube_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 3500,
     "images": 9,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "audioinstrument_tower_speakers",
     "url": "https://filinlabs.com/audioinstrument_tower_speakers",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 4500,
     "images": 5,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "audioinstrument_vivo_solid_state_amplifier",
     "url": "https://filinlabs.com/audioinstrument_vivo_solid_state_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1800,
     "images": 13,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "brave_beetle_talisman_tube_phonostages",
     "url": "https://filinlabs.com/brave_beetle_talisman_tube_phonostages",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 990,
     "images": 11,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "demograf_ajax_tube_amplifier_el_84",
@@ -219,11 +195,12 @@
     "url": "https://filinlabs.com/demograf_clio_speakers",
     "overridden": false,
     "warnings": [
+      "нет 7 карточек курации",
       "нет строки куратора"
     ],
     "price": 5000,
     "images": 14,
-    "curation": 7
+    "curation": 0
   },
   {
     "slug": "demograf_hades_hybrid_class_d_amplifier_dac",
@@ -301,34 +278,30 @@
     "slug": "eridan_antares_r2r_dac",
     "url": "https://filinlabs.com/eridan_antares_r2r_dac",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 4500,
     "images": 11,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "eridan_audio_quasar_amplifier",
     "url": "https://filinlabs.com/eridan_audio_quasar_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 4500,
     "images": 7,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "eridan_audio_rigel_integrated_amplifier",
     "url": "https://filinlabs.com/eridan_audio_rigel_integrated_amplifier",
     "overridden": false,
     "warnings": [
-      "нет строки куратора"
+      "нет 7 карточек курации"
     ],
     "price": 6500,
     "images": 10,
-    "curation": 7
+    "curation": 0
   },
   {
     "slug": "filin_audio_limited",
@@ -339,106 +312,88 @@
     ],
     "price": 2500,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "filin_audio_model_1_premium_v2",
     "url": "https://filinlabs.com/filin_audio_model_1_premium_v2",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1900,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "filin_audio_model_1_standard_v2",
     "url": "https://filinlabs.com/filin_audio_model_1_standard_v2",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1499,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "filin_audio_purity_headphones_cable",
     "url": "https://filinlabs.com/filin_audio_purity_headphones_cable",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 500,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "filin_audio_quadron",
     "url": "https://filinlabs.com/filin_audio_quadron",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 3200,
     "images": 12,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "flatvox_gbc",
     "url": "https://filinlabs.com/flatvox_gbc",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1100,
     "images": 10,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "flatvox_gbc_dj_hulk",
     "url": "https://filinlabs.com/flatvox_gbc_dj_hulk",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 999,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "flatvox_kona",
     "url": "https://filinlabs.com/flatvox_kona",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1200,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_2a3_tube_amplifier",
     "url": "https://filinlabs.com/gerbera_2a3_tube_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 2800,
     "images": 12,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_a8045_tube_headphone_amplifier",
     "url": "https://filinlabs.com/gerbera_a8045_tube_headphone_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1300,
     "images": 8,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_ac_mains_harmonizer_noise_filter",
@@ -449,150 +404,124 @@
     ],
     "price": 1300,
     "images": 8,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_active_tube_preamplifier",
     "url": "https://filinlabs.com/gerbera_active_tube_preamplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 2200,
     "images": 11,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_attento_otl_tube_electrostatic_headphone_amplifier",
     "url": "https://filinlabs.com/gerbera_attento_otl_tube_electrostatic_headphone_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 3400,
     "images": 5,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_bouree_tube_phonostage_mm_mc",
     "url": "https://filinlabs.com/gerbera_bouree_tube_phonostage_mm_mc",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 990,
     "images": 11,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_dual_mono_mosfet_headphone_amplifier",
     "url": "https://filinlabs.com/gerbera_dual_mono_mosfet_headphone_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1600,
     "images": 10,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_electrostatic_amplifier",
     "url": "https://filinlabs.com/gerbera_electrostatic_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 950,
     "images": 5,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_equos",
     "url": "https://filinlabs.com/gerbera_equos",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1200,
     "images": 7,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_grigio",
     "url": "https://filinlabs.com/gerbera_grigio",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 650,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_ha_15_tube_amp_electrostatic_planar",
     "url": "https://filinlabs.com/gerbera_ha_15_tube_amp_electrostatic_planar",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1800,
     "images": 7,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_ha_45_tube_headphone_amplifier_dac",
     "url": "https://filinlabs.com/gerbera_ha_45_tube_headphone_amplifier_dac",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 2500,
     "images": 9,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_lira_compact_tube_amplifier_ultralinear_se",
     "url": "https://filinlabs.com/gerbera_lira_compact_tube_amplifier_ultralinear_se",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1500,
     "images": 8,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_multibit_dac",
     "url": "https://filinlabs.com/gerbera_multibit_dac",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1700,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_onda",
     "url": "https://filinlabs.com/gerbera_onda",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 990,
     "images": 5,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_pcm1794_dsd1794_dac_otis",
     "url": "https://filinlabs.com/gerbera_pcm1794_dsd1794_dac_otis",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 2500,
     "images": 13,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_routing_switch",
@@ -603,161 +532,135 @@
     ],
     "price": 1200,
     "images": 8,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_solero_network_switch_tube_clock",
     "url": "https://filinlabs.com/gerbera_solero_network_switch_tube_clock",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1200,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_sound_emotion",
     "url": "https://filinlabs.com/gerbera_sound_emotion",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 990,
     "images": 13,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_sound_onda_ha",
     "url": "https://filinlabs.com/gerbera_sound_onda_ha",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1100,
     "images": 4,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_squire",
     "url": "https://filinlabs.com/gerbera_squire",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 490,
     "images": 10,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_tinker_audiophile_network_player_streamer_server_endpoint",
     "url": "https://filinlabs.com/gerbera_tinker_audiophile_network_player_streamer_server_endpoint",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 950,
     "images": 10,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_tube_master_clock",
     "url": "https://filinlabs.com/gerbera_tube_master_clock",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1500,
     "images": 10,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "gerbera_tv_lpf_dac",
     "url": "https://filinlabs.com/gerbera_tv_lpf_dac",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 2000,
     "images": 13,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "german_magistro_headphone_cables",
     "url": "https://filinlabs.com/german_magistro_headphone_cables",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 500,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "konstantin_audio_a2_solid_state_amplifier",
     "url": "https://filinlabs.com/konstantin_audio_a2_solid_state_amplifier",
     "overridden": false,
     "warnings": [
-      "нет строки куратора"
+      "нет 7 карточек курации"
     ],
     "price": 5500,
     "images": 10,
-    "curation": 7
+    "curation": 0
   },
   {
     "slug": "konstantin_audio_a_1_synergy_speaker_cables",
     "url": "https://filinlabs.com/konstantin_audio_a_1_synergy_speaker_cables",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1800,
     "images": 8,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "konstantin_audio_ac_power_cables",
     "url": "https://filinlabs.com/konstantin_audio_ac_power_cables",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1200,
     "images": 9,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "konstantin_audio_ka_1_fatboy_headphones_cable",
     "url": "https://filinlabs.com/konstantin_audio_ka_1_fatboy_headphones_cable",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 800,
     "images": 11,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "konstantin_audio_rca_xlr_cables",
     "url": "https://filinlabs.com/konstantin_audio_rca_xlr_cables",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 990,
     "images": 12,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "konstantin_audio_un_1_solid_state_headphones_amplifier",
     "url": "https://filinlabs.com/konstantin_audio_un_1_solid_state_headphones_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1900,
     "images": 8,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "nemesis_solid_state_amplifier_demograf",
@@ -775,56 +678,50 @@
     "slug": "orvellium_nocturne_aura",
     "url": "https://filinlabs.com/orvellium_nocturne_aura",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 999,
     "images": 9,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "perun_dark_sound",
     "url": "https://filinlabs.com/perun_dark_sound",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 990,
     "images": 13,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "perun_elder_electrostatic_speakers",
     "url": "https://filinlabs.com/perun_elder_electrostatic_speakers",
     "overridden": false,
     "warnings": [
-      "нет строки куратора"
+      "нет 7 карточек курации"
     ],
     "price": 25000,
     "images": 11,
-    "curation": 7
+    "curation": 0
   },
   {
     "slug": "perun_junior_hybrid_electrostatic_speakers",
     "url": "https://filinlabs.com/perun_junior_hybrid_electrostatic_speakers",
     "overridden": false,
     "warnings": [
-      "нет строки куратора"
+      "нет 7 карточек курации"
     ],
     "price": 20000,
     "images": 14,
-    "curation": 7
+    "curation": 0
   },
   {
     "slug": "perun_modern",
     "url": "https://filinlabs.com/perun_modern",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1450,
     "images": 12,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "perun_modern_closed",
@@ -835,117 +732,97 @@
     ],
     "price": 1950,
     "images": 9,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "phenomenon_kgsshv_carbon_electrostatic_headphone_amplifier",
     "url": "https://filinlabs.com/phenomenon_kgsshv_carbon_electrostatic_headphone_amplifier",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 2500,
     "images": 13,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "phenomenon_libratum",
     "url": "https://filinlabs.com/phenomenon_libratum",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1700,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "phenomenon_spatium",
     "url": "https://filinlabs.com/phenomenon_spatium",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1300,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "sciber_encore_universal_linear_power_supply",
     "url": "https://filinlabs.com/sciber_encore_universal_linear_power_supply",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 650,
     "images": 6,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "sciber_enflow",
     "url": "https://filinlabs.com/sciber_enflow",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1200,
     "images": 12,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "snorry_joule_headphones",
     "url": "https://filinlabs.com/snorry_joule_headphones",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 800,
     "images": 6,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "snorry_nm_2_headphones",
     "url": "https://filinlabs.com/snorry_nm_2_headphones",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 2500,
     "images": 4,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "snorry_si_5_mk_2_headphones",
     "url": "https://filinlabs.com/snorry_si_5_mk_2_headphones",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 850,
     "images": 9,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "snorry_si_6_headphones",
     "url": "https://filinlabs.com/snorry_si_6_headphones",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 1250,
     "images": 6,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "snorry_trion_mk_3",
     "url": "https://filinlabs.com/snorry_trion_mk_3",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 3700,
     "images": 8,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "twinmono_tzar_dst_neumann_dst",
@@ -956,7 +833,7 @@
     ],
     "price": 3500,
     "images": 14,
-    "curation": 7
+    "curation": 6
   },
   {
     "slug": "ulixes_solid_state_demograf_phonostage",
@@ -974,11 +851,9 @@
     "slug": "volga_tone_priboi_1",
     "url": "https://filinlabs.com/volga_tone_priboi_1",
     "overridden": false,
-    "warnings": [
-      "нет строки куратора"
-    ],
+    "warnings": [],
     "price": 950,
     "images": 14,
-    "curation": 7
+    "curation": 6
   }
 ]
