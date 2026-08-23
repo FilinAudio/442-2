@@ -137,6 +137,51 @@ function parseCuration(text) {
   return out.length >= 3 ? out : null;
 }
 
+function parseT491($, rec) {
+  const out = [];
+
+  $(rec).find('.t491__col').each((_, el) => {
+
+    let title = norm($(el).find('.t-card__title').text());
+    let descr = norm($(el).find('.t-card__descr').text());
+
+    if (!title || !descr) return;
+
+    if (/^CATHEGORY/i.test(title)) {
+      title = 'Category & Budget Tier';
+    }
+    else if (/^CATEGORY/i.test(title)) {
+      title = 'Category & Budget Tier';
+    }
+    else if (/^TAGS/i.test(title)) {
+      title = 'Tags & Features';
+    }
+    else if (/^SONIC/i.test(title)) {
+      title = 'Sonic Signature';
+    }
+    else if (/^CURATOR/i.test(title)) {
+      title = "Curator's Choice";
+    }
+    else if (/^HIGH/i.test(title)) {
+      title = 'High Technologies';
+    }
+    else if (/^SYNERGY/i.test(title)) {
+      title = 'Synergy Match';
+    }
+    else if (/^GENRES/i.test(title)) {
+      title = 'Genres Accord';
+    }
+
+    out.push({
+      title,
+      html:`<p>${descr}</p>`
+    });
+
+  });
+
+  return out.length ? out : null;
+}
+
 /* ---------- разбор страницы --------------------------------- */
 
 function extract(html, url, $) {
@@ -156,8 +201,11 @@ function extract(html, url, $) {
 
   const heroIndex = records.findIndex(r => $(r).find('.t-cover').length);
   const heroRec = heroIndex >= 0 ? records[heroIndex] : null;
-  const zoneStart = heroIndex >= 0 ? heroIndex + 1 : 0;
-  const zone = zoneStart < productIndex ? records.slice(zoneStart, productIndex) : [];
+const zoneStart = heroIndex >= 0 ? heroIndex + 1 : 0;
+
+const zone = zoneStart < productIndex
+  ? records.slice(zoneStart, productIndex)
+  : [];
 
   const rawName = norm($(productRoot).find('.js-product-name').first().text())
     .replace(/\s*\(Standard Edition\)\s*$/i, '')
@@ -171,9 +219,15 @@ function extract(html, url, $) {
     : '';
 
   let curation = null, curatorText = '', curatorId = '', overviewHtml = '', overviewTitle = '';
+for (const rec of zone) {
 
- for (const rec of zone) {
   let text = blockText($, $(rec));
+
+  // Tilda t-card / zero / html blocks
+  if (!text && $(rec).attr('id') === 'rec2456676481') {
+    text = $(rec).text();
+  }
+
 
   text = text.replace(
     /t_onReady\(function\(\).*?t491_init.*?\}\);\}\);/gs,
@@ -188,12 +242,21 @@ function extract(html, url, $) {
   text = norm(text);
 
   if (!curation) {
-    const parsed = parseCuration(text);
-    if (parsed) { 
-      curation = parsed; 
-      continue; 
-    }
+
+  const t491 = parseT491($, rec);
+
+  if (t491 && t491.length >= 3) {
+    curation = t491;
+    continue;
   }
+
+  const parsed = parseCuration(text);
+
+  if (parsed) { 
+    curation = parsed; 
+    continue; 
+  }
+}
 
     if (!curatorText && /^Handcrafted by/i.test(text) && text.length < 300) {
       curatorText = text; curatorId = $(rec).attr('id') || ''; continue;
