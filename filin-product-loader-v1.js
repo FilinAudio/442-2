@@ -1,16 +1,13 @@
-/*! filin-product-loader v1.1 — параллельный стек, мягкий откат */
+/*! filin-product-loader v1.1.2 — параллельный стек, мягкий откат */
 (function () {
   'use strict';
   if (window.FilinProductLoader) return;
 
-  var CDN      = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@v1.1.0/';
+  var CDN      = 'https://cdn.jsdelivr.net/gh/FilinAudio/442-2@v1.1.2/';
   var CATALOG  = 'filin-rich-product-catalog-v2-runtime.js';
   var CORE     = 'filin-master-product-v3-3-2-golden-standard-runtime.js';
   var COMMERCE = 'filin-master-product-v3-clean-commerce-v2.js';
   var WISHLIST = 'filin-master-product-v3-wishlist-bridge-v4.js';
-
-  /* 5 с не хватало на Fast 4G с холодным кэшем — откат срабатывал
-     на живой странице. Таймаут нужен только на случай мёртвого CDN. */
   var FALLBACK_MS = 15000;
   var DEBUG = /[?&]filin_debug=1/.test(location.search);
 
@@ -29,7 +26,7 @@
     return new Promise(function (res, rej) {
       if (has(src)) return res();
       var s = document.createElement('script');
-      s.src = src; s.async = true;          /* порядок не важен: apply() зовём сами */
+      s.src = src; s.async = true;
       s.onload = function () { log('loaded', name); res(); };
       s.onerror = function () { rej(new Error('failed: ' + name)); };
       document.head.appendChild(s);
@@ -58,8 +55,6 @@
     }
     document.documentElement.setAttribute('data-filin-product', s);
 
-    /* Каталог нужен ядру не при загрузке, а в момент apply(), который
-       вызываем мы. Значит цепочка не нужна — грузим три файла разом. */
     Promise.all([
       load('generated/profiles/' + s + '.js'),
       load(CATALOG),
@@ -83,9 +78,6 @@
 
       api.profiles[s] = p;
       api.apply();
-
-      /* Если откат уже сработал по таймауту — снимаем, иначе на экране
-         окажется и старое, и новое. */
       document.documentElement.classList.remove('filin-legacy-restore');
       document.documentElement.setAttribute('data-filin-ready', '1');
 
@@ -102,6 +94,6 @@
     setTimeout(function () { restore('таймаут ' + FALLBACK_MS + ' мс'); }, FALLBACK_MS);
   }
 
-  window.FilinProductLoader = { version: '1.1.0', boot: boot };
+  window.FilinProductLoader = { version: '1.1.1', boot: boot };
   if (window.__FILIN_ROUTES__) boot(window.__FILIN_ROUTES__);
 })();

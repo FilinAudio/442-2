@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-/* FILIN LABS — BUILD-TIME PROFILE EXTRACTOR v1.2
-   Zero-блоки Tilda рендерятся из tilda-blocks-page<id>.js, в HTML
-   страницы их картинок нет. Поэтому кроме разметки читаем и этот файл. */
+/* FILIN LABS — BUILD-TIME PROFILE EXTRACTOR v1.4
+   Zero-блок держит кадры в style="background-image:url(...)" на tn-atom,
+   а не в data-original. Поэтому кроме атрибутов прочёсываем весь HTML
+   записи регуляркой — так ловятся и слайдеры, и Zero-блоки, и srcset. */
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -21,7 +22,7 @@ const num = v => { const n = Number(String(v ?? '').replace(/[^\d.]/g, '')); ret
 const slugOf = url => new URL(url, ORIGIN).pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
 
 async function get(url) {
-  const r = await fetch(url, { headers: { 'user-agent': 'FilinProfileExtractor/1.2' } });
+  const r = await fetch(url, { headers: { 'user-agent': 'FilinProfileExtractor/1.3' } });
   if (!r.ok) throw new Error(`HTTP ${r.status} ${url}`);
   return r.text();
 }
@@ -58,12 +59,23 @@ async function urlList() {
   return [...seen];
 }
 
+/* ---------- текст ------------------------------------------- */
+
+/* textContent склеивает соседние блоки: "LoudspeakersUnlimited Edition".
+   Границы блочных тегов заменяем пробелом до извлечения текста. */
+function blockText($, el) {
+  if (!el || !el.length) return '';
+  const spaced = (el.html() || '')
+    .replace(/<\/?(?:br|p|div|h[1-6]|li|tr|td|section|article)[^>]*>/gi, ' ');
+  return norm(cheerio.load(`<div>${spaced}</div>`)('div').text());
+}
+
 /* ---------- картинки ---------------------------------------- */
 
 const BAD = [
-  /\/-\/(resize|empty|format|preview|paint)\//i,   // плейсхолдеры 20x и перекрашенные иконки
+  /\/-\/(resize|empty|format|preview|paint)\//i,
   /^https?:\/\/thb\.tildacdn\.com\//i,
-  /\.svg(\?|$)/i,                                  // иконки блока курации
+  /\.svg(\?|$)/i,
   /\/lib\/icons\//i,
   /(favicon|tildacopy|logo|icon[-_]|spacer|blank\.gif|pixel)/i
 ];
@@ -84,28 +96,14 @@ const IMG_RE = /https:\/\/static\.tildacdn\.com\/[^"'\\\s)>]+?\.(?:jpe?g|png|web
 
 function scan(text, into, seen) {
   const clean = String(text || '').replace(/\\\//g, '/').replace(/\\u002f/gi, '/');
-  let m;
-  IMG_RE.lastIndex = 0;
+  let m; IMG_RE.lastIndex = 0;
   while ((m = IMG_RE.exec(clean))) {
     const u = absolute(m[0]);
     if (!usable(u)) continue;
     const key = u.split('?')[0];
     if (seen.has(key)) continue;
-    seen.add(key);
-    into.push(u);
+    seen.add(key); into.push(u);
   }
-}
-
-/* Zero-блок хранит кадры не в разметке, а в tilda-blocks-page<id>.js */
-async function blocksImages(html) {
-  const out = [], seen = new Set();
-  const srcs = [...html.matchAll(/src="(https:\/\/static\.tildacdn\.com\/ws\/[^"]*tilda-blocks-page[^"]*)"/gi)]
-    .map(m => m[1].replace(/&amp;/g, '&'));
-  for (const src of [...new Set(srcs)]) {
-    try { scan(await get(src), out, seen); }
-    catch (e) { console.warn(`    blocks-js недоступен: ${e.message}`); }
-  }
-  return out;
 }
 
 /* ---------- курация ----------------------------------------- */
@@ -133,7 +131,7 @@ function parseCuration(text) {
   for (let i = 0; i < hits.length; i++) {
     const start = hits[i].index + hits[i].len;
     const end = i + 1 < hits.length ? hits[i + 1].index : text.length;
-    const body = text.slice(start, end).trim().replace(/^[^\w(#]+/, '');
+    const body = norm(text.slice(start, end)).replace(/^[^\w(#]+/, '');
     if (body) out.push({ title: hits[i].title, html: `<p>${body}</p>` });
   }
   return out.length >= 3 ? out : null;
@@ -141,16 +139,8 @@ function parseCuration(text) {
 
 /* ---------- разбор страницы --------------------------------- */
 
-function textWithBreaks($, el) {
-  if (!el || !el.length) return '';
-  const h = (el.html() || '').replace(/<br\s*\/?>/gi, ' ');
-  return norm(cheerio.load(`<div>${h}</div>`)('div').text());
-}
-
-function extract(html, url, jsImages) {
-  const $ = cheerio.load(html);
+function extract(html, url, $) {
   const slug = slugOf(url);
-
   const records = $('#allrecords').children('[id^="rec"]').toArray();
   if (!records.length) return null;
 
@@ -174,8 +164,8 @@ function extract(html, url, jsImages) {
     .replace(/\s*\[[^\]]*\]\s*$/, '');
   const price = num($(productRoot).find('.js-product-price').first().text());
 
-  const heroH1 = heroRec ? textWithBreaks($, $(heroRec).find('.t184__title, h1').first()) : '';
-  const heroDescr = heroRec ? textWithBreaks($, $(heroRec).find('.t184__descr').first()) : '';
+  const heroH1 = heroRec ? blockText($, $(heroRec).find('.t184__title, h1').first()) : '';
+  const heroDescr = heroRec ? blockText($, $(heroRec).find('.t184__descr').first()) : '';
   const heroBg = heroRec
     ? absolute($(heroRec).find('.t-cover__carrier').first().attr('data-content-cover-bg'))
     : '';
@@ -183,7 +173,7 @@ function extract(html, url, jsImages) {
   let curation = null, curatorText = '', curatorId = '', overviewHtml = '', overviewTitle = '';
 
   for (const rec of zone) {
-    const text = norm($(rec).text());
+    const text = blockText($, $(rec));
     if (!curation) {
       const parsed = parseCuration(text);
       if (parsed) { curation = parsed; continue; }
@@ -192,7 +182,7 @@ function extract(html, url, jsImages) {
       curatorText = text; curatorId = $(rec).attr('id') || ''; continue;
     }
     if (!overviewTitle) {
-      const t = norm($(rec).find('.label-name, h2').first().text());
+      const t = blockText($, $(rec).find('.label-name, h2').first());
       if (t && t.length < 180) overviewTitle = t;
     }
     $(rec).find('p').each((_, p) => {
@@ -201,11 +191,12 @@ function extract(html, url, jsImages) {
     });
   }
 
-  /* Сначала атрибуты разметки, затем кадры из blocks-js.
-     Обложку из галереи убираем: она показывается отдельно. */
   const seen = new Set(), images = [];
   for (const node of [heroRec, ...zone, productRec]) {
     if (!node) continue;
+
+    /* Сначала data-original: там полноразмерный файл, тогда как в src
+       на этот момент лежит плейсхолдер шириной 20 пикселей. */
     $(node).find('[data-original],[data-content-cover-bg]').each((_, el) => {
       for (const a of ['data-original', 'data-content-cover-bg']) {
         const u = absolute($(el).attr(a));
@@ -215,11 +206,10 @@ function extract(html, url, jsImages) {
         seen.add(key); images.push(u);
       }
     });
-  }
-  for (const u of jsImages) {
-    const key = u.split('?')[0];
-    if (seen.has(key)) continue;
-    seen.add(key); images.push(u);
+
+    /* Затем весь HTML записи: Zero-блок держит кадры в inline-стилях,
+       слайдеры — в атрибутах. Регулярка забирает и то, и другое. */
+    scan($.html(node), images, seen);
   }
   const heroKey = heroBg.split('?')[0];
   const gallery = images.filter(u => u.split('?')[0] !== heroKey).slice(0, 14);
@@ -319,15 +309,17 @@ console.log(`Проверяю ${urls.length} страниц…\n`);
 const raw = await pool(urls, async url => {
   const html = await get(url);
   if (!/js-product-btn/.test(html)) return null;
-  const jsImages = await blocksImages(html);
-  const r = extract(html, url, jsImages);
+  const $ = cheerio.load(html);
+  const r = extract(html, url, $);
   return r ? await applyOverride(r) : null;
 });
 
 const results = raw.filter(r => r && !r.error);
 const failed = raw.filter(r => r && r.error);
 
+let noImg = 0;
 for (const r of results) {
+  if (!r.profile.overview.galleryImages.length) noImg++;
   console.log(`${r.warnings.length ? '!' : ' '} ${r.slug.padEnd(50)} ` +
     `$${String(r.profile.commerce.basePrice).padEnd(6)} ` +
     `img:${String(r.profile.overview.galleryImages.length).padEnd(3)} ` +
@@ -336,6 +328,6 @@ for (const r of results) {
 }
 for (const f of failed) console.log(`x ${f.url} — ${f.error}`);
 
-console.log(`\nКарточек товара: ${results.length}. Ошибок: ${failed.length}.`);
+console.log(`\nКарточек: ${results.length}. Без картинок: ${noImg}. Ошибок: ${failed.length}.`);
 if (DRY) console.log('\n--dry: ничего не записано.');
 else if (results.length) await write(results);
