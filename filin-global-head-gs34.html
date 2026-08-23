@@ -1,0 +1,94 @@
+<!-- ============================================================
+     FILIN LABS · GS 3.4 · Global product runtime loader
+     Куда: Настройки сайта → Ещё → HTML-код внутрь HEAD,
+     ПОСЛЕ существующего Global stabilization V5 / Cart Bridge.
+     Задача: подключить V3-рантайм на ВСЕ карточки, а не поштучно.
+     ============================================================ -->
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- CONFIG — правится один раз ---------- */
+  var CDN = "https://cdn.jsdelivr.net/gh/FilinAudio/442-2@v1.0.0/";
+
+  // Точные имена файлов возьми из HEAD любой рабочей карточки
+  // (напр. demograf_tempestus) — в консоли они видны справа.
+  var RUNTIME = [
+    "filin-rich-product-catalog-v2-runtime.js",
+    "filin-master-product-golden-standard-runtime.js",
+    "filin-master-product-clean-commerce-v2.js",
+    "filin-master-product-wishlist-bridge-v4.js",
+    "filin-gs34-patch.js"                 // патч из второго файла
+  ];
+
+  // Страницы, где карточку строить не надо
+  var SKIP = ["", "home", "main", "index", "catalog", "cart", "checkout",
+              "about", "contacts", "blog", "wishlist", "account"];
+
+  // Если на странице уже есть свой V3-скрипт (старый T123-блок) —
+  // грузим только патч, чтобы не было двойной инициализации.
+  var OWN_RUNTIME = 'script[src*="filin-master-product"]';
+
+  var DEBUG = true;
+  /* ------------------------------------------------ */
+
+  var slug = location.pathname.replace(/^\/+|\/+$/g, "").split("/").pop();
+  if (SKIP.indexOf(slug) > -1) return;
+
+  function log() {
+    if (DEBUG && window.console) console.log.apply(console,
+      ["%c[GS3.4]", "color:#B98D54;font-weight:700"].concat([].slice.call(arguments)));
+  }
+
+  function load(list, i) {
+    i = i || 0;
+    if (i >= list.length) { log("runtime chain ready"); return; }
+    var src = /^https?:/.test(list[i]) ? list[i] : CDN + list[i];
+    if (document.querySelector('script[src="' + src + '"]')) return load(list, i + 1);
+    var s = document.createElement("script");
+    s.src = src;
+    s.async = false;                       // порядок важен
+    s.onload = function () { load(list, i + 1); };
+    s.onerror = function () {
+      log("FAILED:", src, "→ пропускаю, цепочка продолжается");
+      load(list, i + 1);
+    };
+    document.head.appendChild(s);
+  }
+
+  function boot() {
+    var own = document.querySelector(OWN_RUNTIME);
+    if (own) {
+      log("страница со своим V3-блоком, гружу только патч");
+      load([RUNTIME[RUNTIME.length - 1]]);
+    } else {
+      log("V3 на странице нет — гружу глобальный рантайм для", slug);
+      load(RUNTIME);
+    }
+  }
+
+  // Ждём DOM: только к этому моменту видно, есть ли на странице
+  // собственные T123-блоки со скриптами.
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+
+  /* ---- Страховка от белой страницы ----
+     Если legacy-hide.css прячет старую вёрстку, а рантайм не отрисовал
+     карточку за 5 секунд — возвращаем старую вёрстку, чтобы страница
+     не осталась пустой. */
+  setTimeout(function () {
+    if (document.querySelector(".fl34-ready, [data-fl-mp3-rendered]")) return;
+    var body = document.body;
+    if (body && (body.offsetHeight < 600 || !body.innerText.trim())) {
+      document.documentElement.classList.add("fl-legacy-restore");
+      var st = document.createElement("style");
+      st.textContent = ".fl-legacy-restore .t-rec{display:block!important;visibility:visible!important;opacity:1!important}";
+      document.head.appendChild(st);
+      log("рантайм не отрисовал карточку — вернул легаси-вёрстку");
+    }
+  }, 5000);
+})();
+</script>
