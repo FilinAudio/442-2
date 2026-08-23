@@ -216,6 +216,21 @@ rawInner = rawInner.replace(
   ''
 );
 
+rawInner = rawInner.replace(
+  /t_onReady[\s\S]*$/g,
+  ''
+);
+
+rawInner = rawInner.replace(
+  /#rec\d+[\s\S]*$/g,
+  ''
+);
+
+rawInner = rawInner.replace(
+  /\s*font-size:[^}]+}\s*/g,
+  ''
+);
+
 const inner = norm(rawInner);
 
       if (inner) overviewHtml += `<p>${inner}</p>`;
