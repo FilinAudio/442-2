@@ -1,4 +1,4 @@
-/* СГЕНЕРИРОВАНО */
+/* СГЕНЕРИРОВАНО. */
 (window.FilinProductLoader&&window.FilinProductLoader.boot||function(x){window.__FILIN_ROUTES__=x})(
 {
  "slugs": [

@@ -1,37 +1,37 @@
 #!/usr/bin/env node
+/* FILIN LABS — BUILD-TIME PROFILE EXTRACTOR v1.2
+   Zero-блоки Tilda рендерятся из tilda-blocks-page<id>.js, в HTML
+   страницы их картинок нет. Поэтому кроме разметки читаем и этот файл. */
+
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as cheerio from 'cheerio';
 
-const ORIGIN      = 'https://filinlabs.com';
-const OUT         = 'generated';
-const OVERRIDES   = 'overrides';
+const ORIGIN = 'https://filinlabs.com';
+const OUT = 'generated';
+const OVERRIDES = 'overrides';
 const CONCURRENCY = 4;
 
 const argv = process.argv.slice(2);
-const DRY  = argv.includes('--dry');
+const DRY = argv.includes('--dry');
 const ONLY = (() => { const i = argv.indexOf('--only'); return i >= 0 ? argv[i + 1] : null; })();
 
 const norm = v => String(v ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
-const num  = v => { const n = Number(String(v ?? '').replace(/[^\d.]/g, '')); return Number.isFinite(n) ? n : 0; };
-
-function slugOf(url) {
-  return new URL(url, ORIGIN).pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
-}
+const num = v => { const n = Number(String(v ?? '').replace(/[^\d.]/g, '')); return Number.isFinite(n) ? n : 0; };
+const slugOf = url => new URL(url, ORIGIN).pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
 
 async function get(url) {
-  const r = await fetch(url, { headers: { 'user-agent': 'FilinProfileExtractor/1.0' } });
+  const r = await fetch(url, { headers: { 'user-agent': 'FilinProfileExtractor/1.2' } });
   if (!r.ok) throw new Error(`HTTP ${r.status} ${url}`);
   return r.text();
 }
 
 async function pool(items, worker) {
-  const out = [];
-  let i = 0;
+  const out = []; let i = 0;
   await Promise.all(Array.from({ length: CONCURRENCY }, async () => {
     while (i < items.length) {
       const idx = i++;
-      try { out[idx] = await worker(items[idx], idx); }
+      try { out[idx] = await worker(items[idx]); }
       catch (e) { out[idx] = { error: String(e.message || e), url: items[idx] }; }
     }
   }));
@@ -44,15 +44,12 @@ async function urlList() {
     const urls = manual.split('\n').map(s => s.trim()).filter(s => s && !s.startsWith('#'));
     if (urls.length) { console.log(`Список из tools/product-urls.txt: ${urls.length}`); return urls; }
   } catch {}
-
   console.log('Читаю sitemap.xml…');
-  const seen = new Set();
-  const queue = [`${ORIGIN}/sitemap.xml`];
-
+  const seen = new Set(); const queue = [`${ORIGIN}/sitemap.xml`];
   while (queue.length) {
     const xml = await get(queue.shift());
-    const locs = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map(m => m[1]);
-    for (const loc of locs) {
+    for (const m of xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)) {
+      const loc = m[1];
       if (/\.xml($|\?)/i.test(loc)) queue.push(loc);
       else if (loc.startsWith(ORIGIN)) seen.add(loc.split('#')[0]);
     }
@@ -61,50 +58,57 @@ async function urlList() {
   return [...seen];
 }
 
-const BAD_URL = [
-  /\/-\/(resize|empty|format|preview)\//i,
+/* ---------- картинки ---------------------------------------- */
+
+const BAD = [
+  /\/-\/(resize|empty|format|preview|paint)\//i,   // плейсхолдеры 20x и перекрашенные иконки
   /^https?:\/\/thb\.tildacdn\.com\//i,
-  /\.svg(\?|$)/i,
+  /\.svg(\?|$)/i,                                  // иконки блока курации
+  /\/lib\/icons\//i,
   /(favicon|tildacopy|logo|icon[-_]|spacer|blank\.gif|pixel)/i
 ];
 
-function usableImage(u) {
-  if (!u) return false;
-  if (!/^https:\/\/static\.tildacdn\.com\//i.test(u)) return false;
-  if (!/\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) return false;
-  return !BAD_URL.some(re => re.test(u));
-}
+const usable = u =>
+  !!u &&
+  /^https:\/\/static\.tildacdn\.com\//i.test(u) &&
+  /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u) &&
+  !BAD.some(re => re.test(u));
 
 function absolute(raw) {
-  const s = String(raw || '').trim().split(/\s+/)[0];
+  const s = String(raw || '').replace(/\\\//g, '/').trim().split(/\s+/)[0];
   if (!s) return '';
   try { return new URL(s, ORIGIN).href; } catch { return ''; }
 }
 
-function collectImages($, nodes) {
-  const seen = new Set(), out = [];
-  const add = raw => {
-    const u = absolute(raw);
-    if (!usableImage(u)) return;
+const IMG_RE = /https:\/\/static\.tildacdn\.com\/[^"'\\\s)>]+?\.(?:jpe?g|png|webp|avif)/gi;
+
+function scan(text, into, seen) {
+  const clean = String(text || '').replace(/\\\//g, '/').replace(/\\u002f/gi, '/');
+  let m;
+  IMG_RE.lastIndex = 0;
+  while ((m = IMG_RE.exec(clean))) {
+    const u = absolute(m[0]);
+    if (!usable(u)) continue;
     const key = u.split('?')[0];
-    if (seen.has(key)) return;
+    if (seen.has(key)) continue;
     seen.add(key);
-    out.push(u);
-  };
-  for (const node of nodes) {
-    if (!node) continue;
-    $(node).find('img,[data-original],[data-content-cover-bg],[style*="background"]').each((_, el) => {
-      const $el = $(el);
-      add($el.attr('data-original'));
-      add($el.attr('data-content-cover-bg'));
-      const style = $el.attr('style') || '';
-      const m = /url\((['"]?)([^'")]+)\1\)/i.exec(style);
-      if (m) add(m[2]);
-      if (el.tagName === 'img') add($el.attr('src'));
-    });
+    into.push(u);
+  }
+}
+
+/* Zero-блок хранит кадры не в разметке, а в tilda-blocks-page<id>.js */
+async function blocksImages(html) {
+  const out = [], seen = new Set();
+  const srcs = [...html.matchAll(/src="(https:\/\/static\.tildacdn\.com\/ws\/[^"]*tilda-blocks-page[^"]*)"/gi)]
+    .map(m => m[1].replace(/&amp;/g, '&'));
+  for (const src of [...new Set(srcs)]) {
+    try { scan(await get(src), out, seen); }
+    catch (e) { console.warn(`    blocks-js недоступен: ${e.message}`); }
   }
   return out;
 }
+
+/* ---------- курация ----------------------------------------- */
 
 const LABELS = [
   ['Category & Budget Tier', /(?:CATHEGORY|CATEGORY)\s*&\s*BUDGET\s*TIER/i],
@@ -125,7 +129,6 @@ function parseCuration(text) {
   }
   if (hits.length < 3) return null;
   hits.sort((a, b) => a.index - b.index);
-
   const out = [];
   for (let i = 0; i < hits.length; i++) {
     const start = hits[i].index + hits[i].len;
@@ -136,37 +139,44 @@ function parseCuration(text) {
   return out.length >= 3 ? out : null;
 }
 
-function extract(html, url) {
+/* ---------- разбор страницы --------------------------------- */
+
+function textWithBreaks($, el) {
+  if (!el || !el.length) return '';
+  const h = (el.html() || '').replace(/<br\s*\/?>/gi, ' ');
+  return norm(cheerio.load(`<div>${h}</div>`)('div').text());
+}
+
+function extract(html, url, jsImages) {
   const $ = cheerio.load(html);
   const slug = slugOf(url);
 
   const records = $('#allrecords').children('[id^="rec"]').toArray();
   if (!records.length) return null;
 
-  const isProductRoot = el =>
+  const isRoot = el =>
     $(el).find('.js-product-btn').length &&
     ($(el).find('.js-product-price').length || $(el).find('.js-product-name').length);
 
-  const productIndex = records.findIndex(r => $(r).find('.js-product').filter((_, p) => isProductRoot(p)).length);
+  const productIndex = records.findIndex(r => $(r).find('.js-product').filter((_, p) => isRoot(p)).length);
   if (productIndex < 0) return null;
 
-  const productRec   = records[productIndex];
-  const productRoot = $(productRec).find('.js-product').filter((_, p) => isProductRoot(p)).first();
+  const productRec = records[productIndex];
+  const productRoot = $(productRec).find('.js-product').filter((_, p) => isRoot(p)).first();
 
   const heroIndex = records.findIndex(r => $(r).find('.t-cover').length);
-  const heroRec   = heroIndex >= 0 ? records[heroIndex] : null;
+  const heroRec = heroIndex >= 0 ? records[heroIndex] : null;
   const zoneStart = heroIndex >= 0 ? heroIndex + 1 : 0;
-  const zone      = zoneStart < productIndex ? records.slice(zoneStart, productIndex) : [];
+  const zone = zoneStart < productIndex ? records.slice(zoneStart, productIndex) : [];
 
   const rawName = norm($(productRoot).find('.js-product-name').first().text())
     .replace(/\s*\(Standard Edition\)\s*$/i, '')
     .replace(/\s*\[[^\]]*\]\s*$/, '');
-
   const price = num($(productRoot).find('.js-product-price').first().text());
 
-  const heroH1    = heroRec ? norm($(heroRec).find('.t184__title, h1').first().text()) : '';
-  const heroDescr = heroRec ? norm($(heroRec).find('.t184__descr').first().text())     : '';
-  const heroBg    = heroRec
+  const heroH1 = heroRec ? textWithBreaks($, $(heroRec).find('.t184__title, h1').first()) : '';
+  const heroDescr = heroRec ? textWithBreaks($, $(heroRec).find('.t184__descr').first()) : '';
+  const heroBg = heroRec
     ? absolute($(heroRec).find('.t-cover__carrier').first().attr('data-content-cover-bg'))
     : '';
 
@@ -174,133 +184,121 @@ function extract(html, url) {
 
   for (const rec of zone) {
     const text = norm($(rec).text());
-
     if (!curation) {
       const parsed = parseCuration(text);
       if (parsed) { curation = parsed; continue; }
     }
-
     if (!curatorText && /^Handcrafted by/i.test(text) && text.length < 300) {
-      curatorText = text;
-      curatorId = $(rec).attr('id') || '';
-      continue;
+      curatorText = text; curatorId = $(rec).attr('id') || ''; continue;
     }
-
     if (!overviewTitle) {
       const t = norm($(rec).find('.label-name, h2').first().text());
       if (t && t.length < 180) overviewTitle = t;
     }
-
     $(rec).find('p').each((_, p) => {
       const inner = norm($(p).html() || '');
       if (inner) overviewHtml += `<p>${inner}</p>`;
     });
   }
 
-  const images = collectImages($, [heroRec, ...zone, productRec]);
-  const hideIds = [...zone, productRec]
-    .map(r => $(r).attr('id'))
-    .filter(id => id && id !== curatorId);
+  /* Сначала атрибуты разметки, затем кадры из blocks-js.
+     Обложку из галереи убираем: она показывается отдельно. */
+  const seen = new Set(), images = [];
+  for (const node of [heroRec, ...zone, productRec]) {
+    if (!node) continue;
+    $(node).find('[data-original],[data-content-cover-bg]').each((_, el) => {
+      for (const a of ['data-original', 'data-content-cover-bg']) {
+        const u = absolute($(el).attr(a));
+        if (!usable(u)) continue;
+        const key = u.split('?')[0];
+        if (seen.has(key)) continue;
+        seen.add(key); images.push(u);
+      }
+    });
+  }
+  for (const u of jsImages) {
+    const key = u.split('?')[0];
+    if (seen.has(key)) continue;
+    seen.add(key); images.push(u);
+  }
+  const heroKey = heroBg.split('?')[0];
+  const gallery = images.filter(u => u.split('?')[0] !== heroKey).slice(0, 14);
 
   const name = rawName || heroH1 || slug;
 
   return {
-    slug,
-    url,
-    hideIds,
+    slug, url,
+    hideIds: [...zone, productRec].map(r => $(r).attr('id')).filter(id => id && id !== curatorId),
     warnings: [
-      heroIndex < 0            ? 'нет обложки (.t-cover)' : null,
-      !images.length           ? 'не найдено картинок' : null,
-      !heroBg                  ? 'нет фона обложки' : null,
-      !curation                ? 'нет 7 карточек курации' : null,
-      !curatorText             ? 'нет строки куратора' : null,
-      !price                   ? 'цена не определена' : null,
+      heroIndex < 0 ? 'нет обложки (.t-cover)' : null,
+      !gallery.length ? 'не найдено картинок' : null,
+      !heroBg ? 'нет фона обложки' : null,
+      !curation ? 'нет 7 карточек курации' : null,
+      !curatorText ? 'нет строки куратора' : null,
+      !price ? 'цена не определена' : null
     ].filter(Boolean),
-
     profile: {
-      schemaVersion: 2,
-      slug,
-      id: slug.replace(/_/g, '-'),
-      currency: 'USD',
-
-      hero: {
-        staticH1: heroH1 || name,
-        description: heroDescr,
-        background: heroBg || images[0] || ''
-      },
-
+      schemaVersion: 2, slug, id: slug.replace(/_/g, '-'), currency: 'USD',
+      hero: { staticH1: heroH1 || name, description: heroDescr, background: heroBg || gallery[0] || '' },
       curator: curatorText,
-
-      overview: {
-        title: overviewTitle || name,
-        html: overviewHtml,
-        galleryImages: images
-      },
-
+      overview: { title: overviewTitle || name, html: overviewHtml, galleryImages: gallery },
       curation: curation || [],
-
       commerce: {
-        basePrice: price,
-        displayName: name,
-        cartName: `${name} (Standard Edition)`,
-        stickyTitle: name,
+        basePrice: price, displayName: name,
+        cartName: `${name} (Standard Edition)`, stickyTitle: name
       },
-
       golden: {
-        backLabel: "Back to the Filin's nest",
-        backHref: '/',
-        mobileHeroHeight: 860,
-        resultLabel: 'Ultimate Synergy'
+        backLabel: "Back to the Filin's nest", backHref: '/',
+        mobileHeroHeight: 860, resultLabel: 'Ultimate Synergy'
       },
-
       reviewsKey: slug
     }
   };
 }
+
+/* ---------- ручные правки ----------------------------------- */
 
 function deepMerge(base, patch) {
   if (Array.isArray(patch) || patch === null || typeof patch !== 'object') return patch;
   const out = { ...base };
   for (const k of Object.keys(patch)) {
     out[k] = k in base && base[k] && typeof base[k] === 'object' && !Array.isArray(base[k])
-      ? deepMerge(base[k], patch[k])
-      : patch[k];
+      ? deepMerge(base[k], patch[k]) : patch[k];
   }
   return out;
 }
 
-async function applyOverride(result) {
+async function applyOverride(r) {
   try {
-    const raw = await fs.readFile(path.join(OVERRIDES, `${result.slug}.json`), 'utf8');
-    result.profile = deepMerge(result.profile, JSON.parse(raw));
-    result.overridden = true;
+    const raw = await fs.readFile(path.join(OVERRIDES, `${r.slug}.json`), 'utf8');
+    r.profile = deepMerge(r.profile, JSON.parse(raw));
+    r.overridden = true;
   } catch {}
-  return result;
+  return r;
 }
 
+/* ---------- запись ------------------------------------------ */
+
 async function write(results) {
+  await fs.rm(path.join(OUT, 'profiles'), { recursive: true, force: true });
   await fs.mkdir(path.join(OUT, 'profiles'), { recursive: true });
 
   for (const r of results) {
-    const body =
+    await fs.writeFile(path.join(OUT, 'profiles', `${r.slug}.js`),
       `/* СГЕНЕРИРОВАНО tools/extract-profiles.mjs */\n` +
       `(window.FilinProfiles=window.FilinProfiles||{})` +
-      `[${JSON.stringify(r.slug)}]=${JSON.stringify(r.profile)};\n`;
-    await fs.writeFile(path.join(OUT, 'profiles', `${r.slug}.js`), body);
+      `[${JSON.stringify(r.slug)}]=${JSON.stringify(r.profile)};\n`);
   }
 
   const ids = [...new Set(results.flatMap(r => r.hideIds))].sort();
-  const css =
-    `/* СГЕНЕРИРОВАНО */\n` +
-    `html:not(.filin-legacy-restore) :is(\n  ${ids.map(i => '#' + i).join(',\n  ')}\n){\n` +
-    `  display:none!important;\n}\n`;
-  await fs.writeFile(path.join(OUT, 'legacy-hide.css'), css);
+  await fs.writeFile(path.join(OUT, 'legacy-hide.css'),
+    `/* СГЕНЕРИРОВАНО. ${results.length} карточек. */\n` +
+    `html:not(.filin-legacy-restore) :is(\n  ${ids.map(i => '#' + i).join(',\n  ')}\n){\n  display:none!important;\n}\n`);
 
-  const routes =
-    `/* СГЕНЕРИРОВАНО */\n` +
+  await fs.writeFile(path.join(OUT, 'filin-routes.js'),
+    `/* СГЕНЕРИРОВАНО. */\n` +
     `(window.FilinProductLoader&&window.FilinProductLoader.boot||function(x){window.__FILIN_ROUTES__=x})(\n` +
-    JSON.stringify({ slugs: results.map(r => r.slug).sort() }, null, 1) + `);\n`;
-  await fs.writeFile(path.join(OUT, 'filin-routes.js'), routes);
+    JSON.stringify({ slugs: results.map(r => r.slug).sort() }, null, 1) + `);\n`);
 
   await fs.writeFile(path.join(OUT, 'report.json'), JSON.stringify(
     results.map(({ slug, url, warnings, overridden, profile }) => ({
@@ -313,27 +311,31 @@ async function write(results) {
   console.log(`\nЗаписано: ${results.length} профилей, ${ids.length} id в legacy-hide.css`);
 }
 
+/* ---------- main -------------------------------------------- */
+
 const urls = (await urlList()).filter(u => !ONLY || slugOf(u) === ONLY);
 console.log(`Проверяю ${urls.length} страниц…\n`);
 
 const raw = await pool(urls, async url => {
   const html = await get(url);
-  const r = extract(html, url);
+  if (!/js-product-btn/.test(html)) return null;
+  const jsImages = await blocksImages(html);
+  const r = extract(html, url, jsImages);
   return r ? await applyOverride(r) : null;
 });
 
 const results = raw.filter(r => r && !r.error);
-const failed  = raw.filter(r => r && r.error);
+const failed = raw.filter(r => r && r.error);
 
 for (const r of results) {
-  const flag = r.warnings.length ? '!' : ' ';
-  console.log(`${flag} ${r.slug.padEnd(50)} $${String(r.profile.commerce.basePrice).padEnd(6)} img:${String(r.profile.overview.galleryImages.length).padEnd(2)} cur:${String(r.profile.curation.length)}`);
+  console.log(`${r.warnings.length ? '!' : ' '} ${r.slug.padEnd(50)} ` +
+    `$${String(r.profile.commerce.basePrice).padEnd(6)} ` +
+    `img:${String(r.profile.overview.galleryImages.length).padEnd(3)} ` +
+    `cur:${r.profile.curation.length}`);
   for (const w of r.warnings) console.log(`      └ ${w}`);
 }
+for (const f of failed) console.log(`x ${f.url} — ${f.error}`);
 
-for (const f of failed) console.log(`✗ ${f.url.split('/').pop() || '/'} — ${f.error}`);
-
-console.log(`\nКарточек товара: ${results.length}. Ошибок загрузки: ${failed.length}.`);
-
+console.log(`\nКарточек товара: ${results.length}. Ошибок: ${failed.length}.`);
 if (DRY) console.log('\n--dry: ничего не записано.');
 else if (results.length) await write(results);
