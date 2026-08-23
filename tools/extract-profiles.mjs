@@ -327,7 +327,24 @@ const inner = norm(rawInner);
 
   return {
     slug, url,
-    hideIds: [...zone, productRec].map(r => $(r).attr('id')).filter(id => id && id !== curatorId),
+hideIds: [...zone, productRec]
+  .filter(r => {
+    const id = $(r).attr('id');
+    if (!id) return false;
+
+    if (parseT491($, r)?.length >= 3) return false;
+
+    const text = blockText($, $(r));
+
+    if (/CATEGORY\s*&\s*BUDGET|CATHEGORY\s*&\s*BUDGET|TAGS?\s*&\s*FEATURES|SONIC\s*SIGNATURE|CURATOR.?S\s*CHOICE|HIGH\s*TECHNOLOGIES|SYNERGY\s*MATCH|GENRES?\s*ACCORD/i.test(text)) {
+      return false;
+    }
+
+    return id !== curatorId;
+  })
+  .map(r => $(r).attr('id')),
+
+
     warnings: [
       heroIndex < 0 ? 'нет обложки (.t-cover)' : null,
       !gallery.length ? 'не найдено картинок' : null,
