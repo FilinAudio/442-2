@@ -186,7 +186,21 @@ function extract(html, url, $) {
       if (t && t.length < 180) overviewTitle = t;
     }
     $(rec).find('p').each((_, p) => {
-      const inner = norm($(p).html() || '');
+
+let rawInner = $(p).html() || '';
+
+rawInner = rawInner.replace(
+  /t_onReady\(function\(\)\s*\{t_onFuncLoad\('t491_init'.*?\}\);\}\);/gs,
+  ''
+);
+
+rawInner = rawInner.replace(
+  /#rec\d+[^}]*\}[^<]*/gs,
+  ''
+);
+
+const inner = norm(rawInner);
+
       if (inner) overviewHtml += `<p>${inner}</p>`;
     });
   }
