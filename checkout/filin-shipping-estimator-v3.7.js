@@ -105,10 +105,9 @@
   var CUR_SYM={USD:'$',EUR:'€',RUB:'₽',KZT:'₸',GBP:'£',JPY:'¥',CNY:'¥',PLN:'zł',TRY:'₺',AED:'AED ',CHF:'CHF '};
   function curCode(v){var c=clean(v).toUpperCase().replace(/\.$/,'');c=CUR_ALIAS[c]||c;return ISO.indexOf(c)>-1?c:'';}
   function fxNum(v){var t=clean(v).replace(/[\s\u00a0$€₸₽£¥]/g,'');if(/^\d+,\d{1,2}$/.test(t)||/^0,\d+$/.test(t))t=t.replace(',','.');else t=t.replace(/,/g,'');var n=parseFloat(t);return isFinite(n)&&n>0?n:0;}
-  var ORIGIN_NAME={RU:'Russia',KZ:'Kazakhstan',DE:'Germany',CN:'China',US:'United States'};
+  var ORIGIN_NAME={KZ:'Kazakhstan',DE:'Germany',CN:'China',US:'United States'};
   function originCode(v){var t=clean(v).toLowerCase();if(!t)return '';
-    if(/^(kz|kaz|kazakhstan|казахстан|рк|республика казахстан)\b/.test(t))return 'KZ';
-    if(/^(ru|rus|russia|russian federation|россия|рф)\b/.test(t))return 'RU';
+    if(/^(kz|kaz|kazakhstan|казахстан|рк|республика казахстан)\b/.test(t))return 'KZ'
     var c=ccFromCountry(t);return c||'';}
   function originOf(pr){return CFG.ORIGIN_BY_SLUG[pr.slug]||pr.origin||CFG.GOODS_ORIGIN;}
   function median(a){if(!a.length)return 0;a=a.slice().sort(function(x,y){return x-y;});return a[Math.floor(a.length/2)];}
@@ -795,7 +794,7 @@
         row('Goods value (declared)',q.goods)+
         row('Carrier delivery'+(q.viaDE?' (KZ → DE Hub → destination)':' (KZ → destination)')+(q.src==='tariff'?'<small>'+(/^(DHL|FedEx|UPS)/.test(q.tariff)?'Carrier tariff incl. fuel surcharge':'Published carrier tariff')+'</small>':((q.src==='freight'||q.src==='sea')?'<small>Export handling, freight, destination handling and door delivery</small>':'')),p.ship)+
         (p.deAgent?row('Germany Hub handling (€200)',p.deAgent):'')+
-        row('Import duty'+(q.region==='US'?' + MPF':'')+'<small>By product category and country of origin'+(q.col2?' · HTSUS Column 2 rates for items of Russian origin':'')+'</small>',p.duty)+
+        row('Import duty'+(q.region==='US'?' + MPF':'')+'<small>By product category and country of origin</small>',p.duty)+
         (p.vat?row('EU VAT ('+Math.round(VAT_EU*100)+'%)',p.vat):'')+
         insRow+
         row('Other expenses',p.other)+
