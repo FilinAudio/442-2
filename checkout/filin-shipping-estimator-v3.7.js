@@ -541,7 +541,7 @@
     return {region:region,kg:kg,goods:goods,freight:m.freight,viaDE:viaDE,box:m.box,
       parts:{ship:ship,deAgent:deAgent,duty:duty+extra,vat:vat,ins:ins,other:other},
       allinUSD:allinUSD, eta:cs.eta||ETA[STATE.svc][STATE.tier], src:cs.src, cw:cs.cw, mode:cs.mode, tariff:cs.label, notes:cs.notes, cc:cc,
-      insInfo:insInfo, col2:col2, origins:origins, euNotice:(region==='EU'&&ruVal>0&&!!CFG.EU_ORIGIN_NOTICE)};
+      insInfo:insInfo, col2:col2, origins:origins};
   }
   function toCur(usd){return usd*(FX.rates[STATE.cur]||1);}
   function fmt(usd){var v=toCur(usd),sym=CUR_SYM[STATE.cur];
