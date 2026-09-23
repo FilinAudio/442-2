@@ -2,7 +2,7 @@
 (function(){
   'use strict';
   if((String(location.pathname||'/').replace(/\/+$/,'')||'/')!=='/checkout') return;
-  if(window.__FLSHIP_V37__) return; window.__FLSHIP_V37__=true;
+  if(window.__FLSHIP_V37__) return; window.__FLSHIP_V37__=true; 
 
   /* ======================= КОНФИГУРАЦИЯ ======================= */
   var CFG={
