@@ -36,8 +36,7 @@
     // Происхождение по товару: колонка таблицы «Origin» / «Country of origin» / «Страна происхождения» (KZ …)
     // или вручную здесь: {'demograf_atlas_amplifier_300b':'KZ'}. Ставить KZ только при наличии сертификата происхождения на партию.
     ORIGIN_BY_SLUG:{},               // страна происхождения товара (влияет на пошлину США и уведомление для ЕС)
-    US_COL2:0.35,                    // США: товары из РФ — ставки HTSUS Column 2 (NTR приостановлен с 04.2022). Для гл. 8518 — 35%, сверять по HS
-    EU_ORIGIN_NOTICE:'Under EU Council Regulation 833/2014 (Art. 3i, Annex XXI), many goods of Russian origin — including loudspeakers, headphones and amplifiers (HS 8518) — cannot be imported into the EU.'
+    US_COL2:0.35                    // США: товары из РФ — ставки HTSUS Column 2 (NTR приостановлен с 04.2022). Для гл. 8518 — 35%, сверять по HS
   };
 
   var SHIP={
@@ -791,7 +790,6 @@
       '<div class="card disc"><p><b>This is an estimate, valid as of the date you submit your order request ('+estDate()+').</b></p>'+
         '<p>Our manager will prepare an exact shipping calculation and get back to you by '+contact()+'. '+
         'If the final cost turns out higher than this estimate, the difference is either paid via a separate invoice, as agreed with you, or covered by Filin Labs.</p></div>'+
-      (q.euNotice?'<div class="card warn"><p><b>EU import restriction.</b> '+CFG.EU_ORIGIN_NOTICE+' Our manager will confirm by '+contact()+' whether your order can be delivered to the EU before any payment.</p></div>':'')+
       '<details class="acc" open><summary>Shipment details</summary><div class="in">'+details+'</div></details>'+
       '<details class="acc"><summary>Cost breakdown <small>'+fmt(q.allinUSD)+'</small></summary><div class="in">'+
         row('Goods value (declared)',q.goods)+
