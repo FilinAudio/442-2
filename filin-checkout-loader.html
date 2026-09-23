@@ -1,0 +1,28 @@
+<!-- FILIN LABS — CHECKOUT LOADER
+     Единственный блок T123 на /checkout.
+     Замените @TAG на ваш тег, например @v3.7.0 -->
+<div id="filin-checkout-root">
+  <div class="flx-initial">
+    <h1>Checkout</h1>
+    <div class="flx-initial-box">Preparing secure checkout…</div>
+  </div>
+</div>
+<script>
+(function(){
+  if((String(location.pathname||'/').replace(/\/+$/,'')||'/')!=='/checkout') return;
+  if(window.__FLCHECKOUT_LOADER__)return;window.__FLCHECKOUT_LOADER__=true;
+  var B='https://cdn.jsdelivr.net/gh/FilinAudio/442-2@TAG/checkout/';
+  ['filin-checkout.css'].forEach(function(f){
+    var l=document.createElement('link');l.rel='stylesheet';l.href=B+f;
+    document.head.appendChild(l);
+  });
+  ['filin-checkout.js',
+   'filin-shipping-logos-v3.7.js',
+   'filin-shipping-estimator-v3.7.js',
+   'filin-address-guard-v1.js'
+  ].forEach(function(f){
+    var s=document.createElement('script');s.src=B+f;s.defer=true;
+    document.head.appendChild(s);
+  });
+})();
+</script>
