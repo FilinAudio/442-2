@@ -176,7 +176,99 @@
       map[slug]={slug:slug,cat:old.cat,usd:usd||old.usd,eur:pr.EUR||old.eur,usdt:pr.USDT||usd||old.usdt,
         l:n('l')||old.l,w:n('w')||old.w,h:n('h')||old.h,kg:n('kg')||old.kg,prices:pr,
         origin:(H.origin!=null?originCode(a[H.origin]):'')||old.origin||''};});
+    applyShippingRates_(rows);
     return found?map:null;}
+  function applyShippingRates_(rows) {
+    var i, start = -1;
+    for (i = 0; i < rows.length; i++) {
+      if (String(rows[i][0] || '').indexOf('---SHIPPING_RATES---') > -1) { start = i + 1; break; }
+    }
+    if (start < 0) return;
+ 
+    // num с поддержкой русской запятой
+    function n(v) {
+      var s = String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.');
+      var x = parseFloat(s); return isFinite(x) ? x : 0;
+    }
+    function cl(v) { return String(v == null ? '' : v).trim(); }
+ 
+    var section = '', r;
+    for (r = start; r < rows.length; r++) {
+      var a = rows[r], c0 = cl(a[0]).toLowerCase();
+      if (!c0 || /^#/.test(c0)) continue; // пустая строка или #ERROR!
+ 
+      // Определяем секцию
+      if (/^carrier tariffs/i.test(c0))         { section = 'carrier'; continue; }
+      if (/^second leg/i.test(c0))              { section = 'leg2'; continue; }
+      if (/^fixed fees$/i.test(c0))             { section = 'fixed'; continue; }
+      if (/^import duty/i.test(c0))             { section = 'duty'; continue; }
+      if (/^us mpf/i.test(c0))                  { section = 'mpf'; continue; }
+ 
+      // Пропускаем строки-заголовки колонок
+      if (c0 === 'service' || c0 === 'param' || c0 === 'category') continue;
+ 
+      // --- CARRIER TARIFFS: service, region, tier, base_usd, per_kg_usd, eta ---
+      if (section === 'carrier') {
+        var svc = cl(a[0]).toLowerCase();   // post | courier
+        var reg = cl(a[1]).toUpperCase();   // EU | US | DE
+        var tier = cl(a[2]).toLowerCase();  // econ | mid | fast
+        var base = n(a[3]), perKg = n(a[4]), eta = cl(a[5]);
+        if (!svc || !reg || !tier || !(base > 0)) continue;
+        if (!SHIP[svc]) SHIP[svc] = {};
+        if (!SHIP[svc][reg]) SHIP[svc][reg] = {};
+        SHIP[svc][reg][tier] = [base, perKg];
+        if (eta) {
+          if (!ETA[svc]) ETA[svc] = {};
+          ETA[svc][tier] = eta;
+        }
+      }
+ 
+      // --- SECOND LEG: service, region, _, base_usd, per_kg_usd ---
+      if (section === 'leg2') {
+        var l_svc = cl(a[0]).toLowerCase();
+        var l_reg = cl(a[1]).toUpperCase();
+        var l_base = n(a[3]), l_perKg = n(a[4]);
+        if (!l_svc || !l_reg || !(l_base > 0)) continue;
+        if (!LEG2[l_svc]) LEG2[l_svc] = {};
+        LEG2[l_svc][l_reg] = [l_base, l_perKg];
+      }
+ 
+      // --- FIXED FEES: param, value ---
+      if (section === 'fixed') {
+        var p = cl(a[0]).toLowerCase(), v = n(a[1]);
+        if (!p) continue;
+        if (p === 'kz_agent_pct')    CFG.KZ_AGENT_PCT = v;
+        if (p === 'kz_agent_cap')    CFG.KZ_AGENT_CAP_USD = v;
+        if (p === 'de_agent')        CFG.DE_AGENT_EUR = v;
+        if (p === 'insurance_pct')   CFG.CARGO_INS.pct = v;
+        if (p === 'conv_crypto')     CFG.CONV.crypto = v;
+        if (p === 'conv_paypal')     CFG.CONV.paypal = v;
+        if (p === 'section122')      CFG.SECTION122 = v;
+        if (p === 'vat_eu')          VAT_EU = v;
+        if (p === 'freight_kg')      CFG.FREIGHT_KG = v;
+        if (p === 'vol_div_post')    CFG.DIV.post = v;
+        if (p === 'vol_div_courier') CFG.DIV.courier = v;
+      }
+ 
+      // --- IMPORT DUTY: category, us_duty, eu_duty ---
+      if (section === 'duty') {
+        var cat = cl(a[0]).toLowerCase(), us_d = n(a[1]), eu_d = n(a[2]);
+        if (!cat) continue;
+        DUTY.US[cat] = us_d;
+        DUTY.EU[cat] = eu_d;
+      }
+ 
+      // --- US MPF: param, value ---
+      if (section === 'mpf') {
+        var mp = cl(a[0]).toLowerCase(), mv = n(a[1]);
+        if (mp === 'mpf_pct')     CFG.MPF.pct = mv;
+        if (mp === 'mpf_min_usd') CFG.MPF.min = mv;
+        if (mp === 'mpf_max_usd') CFG.MPF.max = mv;
+      }
+    }
+ 
+    console.log('[Filin Labs] Shipping rates loaded from CSV: SHIP, LEG2, DUTY, fees updated');
+  }
   function loadFallback(){var map={};
     FALLBACK.forEach(function(a){map[a[0]]={slug:a[0],cat:a[1],usd:a[2],eur:a[3],usdt:a[2],l:a[4],w:a[5],h:a[6],kg:a[7],prices:{}};});
     return map;}
