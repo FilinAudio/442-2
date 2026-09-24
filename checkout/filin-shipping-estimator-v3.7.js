@@ -6,7 +6,7 @@
 
   /* ======================= КОНФИГУРАЦИЯ ======================= */
   var CFG={
-    CSV_URL:'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3UqLDiem0IUkoge_EbNJFgBt48gZ1Ta2aWpZGNaMzQFdIvpfR8p9OywwDSB-21bK3dDPRK96V5g7q/pub?output=csv',
+    CSV_URL:'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3UqLDiem0IUkoge_EbNJFgBt48gZ1Ta2aWpZGNaMzQFdIvpfR8p9OywwDSB-21bK3dDPRK96V5g7q/pub?gid=310517739&single=true&output=csv',
     // Курсы берутся из этой же таблицы (см. блок FX ниже). Если курсы на отдельном листе — укажите его CSV (…/pub?gid=НОМЕР&output=csv)
     FX_CSV_URL:'',
     FX_TTL_MS:3*3600*1000,
